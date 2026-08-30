@@ -1,0 +1,42 @@
+﻿node.exe : <claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+At C:\Users\andre\AppData\Roaming\npm\vercel.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/vercel/dist/vc.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (<claude-code-hi...ns-official" />:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Retrieving project…
+Resolving deployment "ace-helpful-trainer-3vah74m2g-andre-4504s-projects.vercel.app"
+Streaming logs for deployment dpl_DfPpJfok4BLZhc4ibBtqtEK6FuWF starting from 15:45:33.69
+
+waiting for new logs...
+15:45:28.61  🚫  POST  ---  ace-helpful-trainer.vercel.app     /api/chat
+------------------------------------------------------------------------
+Error: Native CLI binary for linux-x64 not found. Reinstall @anthropic-ai/claude-agent-sdk without --omit=optional, or 
+set options.pathToClaudeCodeExecutable.
+    at wD (file:///var/task/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs:162:58417)
+    at SVt (file:///var/task/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs:163:480)
+    at runClaude (/vercel/path0/api/chat.ts:17:13)
+    at handler (/vercel/path0/api/chat.ts:134:26)
+    at Object.n [as handler] (/opt/rust/nodejs.js:17:29621)
+    at r (/opt/rust/nodejs.js:2:16531)
+    at Server.<anonymous> (/opt/rust/nodejs.js:2:12480)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Server.<anonymous> (/opt/rust/nodejs.js:17:14562)
+
+waiting for new logs...
+15:45:42.64  🚫  POST  ---  ace-helpful-trainer.vercel.app     /api/chat
+------------------------------------------------------------------------
+Error: Native CLI binary for linux-x64 not found. Reinstall @anthropic-ai/claude-agent-sdk without --omit=optional, or 
+set options.pathToClaudeCodeExecutable.
+    at wD (file:///var/task/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs:162:58417)
+    at SVt (file:///var/task/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs:163:480)
+    at runClaude (/vercel/path0/api/chat.ts:17:13)
+    at handler (/vercel/path0/api/chat.ts:134:26)
+    at Object.n [as handler] (/opt/rust/nodejs.js:17:29621)
+    at r (/opt/rust/nodejs.js:2:16531)
+    at Server.<anonymous> (/opt/rust/nodejs.js:2:12480)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Server.<anonymous> (/opt/rust/nodejs.js:17:14562)
+
+waiting for new logs...
