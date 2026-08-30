@@ -1,7 +1,7 @@
 import os from 'node:os';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { query } from '@anthropic-ai/claude-agent-sdk';
-import { getScenario } from '../shared/scenarios';
+import { getScenario } from '../shared/scenarios.js';
 
 interface ChatMessage {
   role: 'customer' | 'employee';
