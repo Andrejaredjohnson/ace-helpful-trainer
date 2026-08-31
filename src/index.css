@@ -44,6 +44,14 @@ body {
   padding: 0 16px;
 }
 
+/* Chat screens lock to the visible viewport so the conversation scrolls
+   internally and the mobile keyboard compresses the layout. */
+.shell.chat-mode {
+  height: var(--app-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* ---------- top bar ---------- */
 
 .topbar {
@@ -306,6 +314,7 @@ body {
 
 .chat {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

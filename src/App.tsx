@@ -24,7 +24,11 @@ interface Progress {
   transcripts: Record<string, ChatMessage[]>;
   evaluations: Record<string, Evaluation>;
   skipped: string[];
+  savedAt?: number;
 }
+
+/** Resume a dropped session only briefly; a stale open starts at the beginning. */
+const RESUME_WINDOW_MS = 30 * 60 * 1000;
 
 const STORAGE_KEY = 'ace-helpful-trainer-v2';
 
@@ -46,7 +50,10 @@ function loadProgress(): Progress {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw) as Progress;
-      if (p && typeof p.scenarioIndex === 'number' && Array.isArray(p.skipped) && p.phase !== 'design') return p;
+      const fresh = typeof p.savedAt === 'number' && Date.now() - p.savedAt < RESUME_WINDOW_MS;
+      if (p && typeof p.scenarioIndex === 'number' && Array.isArray(p.skipped) && p.phase !== 'design' && fresh) {
+        return p;
+      }
     }
   } catch {
     /* fresh start */
@@ -56,7 +63,7 @@ function loadProgress(): Progress {
 
 function saveProgress(p: Progress) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...p, savedAt: Date.now() }));
   } catch {
     /* fine */
   }
@@ -145,8 +152,27 @@ export default function App() {
   };
   const closeDesign = () => setProgress((p) => ({ ...p, phase: returnPhase }));
 
+  const chatMode = progress.phase === 'chat' || progress.phase === 'tutorial';
+
+  // Keep the chat screen sized to the visible viewport so the mobile keyboard
+  // compresses the layout instead of pushing the conversation out of view.
+  useEffect(() => {
+    if (!chatMode || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const apply = () => {
+      document.documentElement.style.setProperty('--app-height', `${vv.height}px`);
+      window.scrollTo(0, 0);
+    };
+    apply();
+    vv.addEventListener('resize', apply);
+    return () => {
+      vv.removeEventListener('resize', apply);
+      document.documentElement.style.removeProperty('--app-height');
+    };
+  }, [chatMode]);
+
   return (
-    <div className="shell">
+    <div className={chatMode ? 'shell chat-mode' : 'shell'}>
       <header className="topbar">
         <button className="brand" onClick={() => update({ phase: 'landing' })} aria-label="Home">
           <span className="brand-mark">H</span>
@@ -212,9 +238,11 @@ export default function App() {
 
       {progress.phase === 'design' && <Design />}
 
-      <footer className="foot">
-        A personal training design sample by Andre Johnson. Not an official Ace Hardware product.
-      </footer>
+      {!chatMode && (
+        <footer className="foot">
+          A personal training design sample by Andre Johnson. Not an official Ace Hardware product.
+        </footer>
+      )}
     </div>
   );
 }
@@ -568,10 +596,13 @@ function Trainer(props: {
             </button>
           </div>
         )}
+        {evaluation && (
+          <Feedback ev={evaluation} isLast={props.isLast} onRetry={props.onRetry} onNext={props.onNext} />
+        )}
         <div ref={endRef} />
       </div>
 
-      {!ended && !evaluation ? (
+      {!ended && !evaluation && (
         <div className="composer">
           <div className="input-row">
             <textarea
@@ -583,6 +614,9 @@ function Trainer(props: {
                   send();
                 }
               }}
+              onFocus={() => {
+                setTimeout(() => endRef.current?.scrollIntoView({ block: 'end' }), 300);
+              }}
               placeholder={employeeTurns === 0 ? 'How do you respond?' : 'Keep helping…'}
               rows={2}
               disabled={busy !== null}
@@ -592,10 +626,6 @@ function Trainer(props: {
             </button>
           </div>
         </div>
-      ) : (
-        evaluation && (
-          <Feedback ev={evaluation} isLast={props.isLast} onRetry={props.onRetry} onNext={props.onNext} />
-        )
       )}
     </main>
   );
