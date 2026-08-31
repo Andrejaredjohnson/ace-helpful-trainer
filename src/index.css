@@ -262,6 +262,12 @@ body {
   user-select: none;
 }
 
+.avatar-img {
+  object-fit: cover;
+  display: block;
+  background: var(--line);
+}
+
 .chat {
   flex: 1;
   overflow-y: auto;

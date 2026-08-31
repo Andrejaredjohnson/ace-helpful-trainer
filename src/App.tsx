@@ -82,15 +82,28 @@ async function api(
 // ---------- small pieces ----------
 
 function Avatar({ s, size = 44 }: { s: Scenario; size?: number }) {
-  // Placeholder until real photos arrive: colored disc + initial.
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div
+        className="avatar"
+        style={{ width: size, height: size, background: s.avatarColor, fontSize: size * 0.4 }}
+        aria-hidden="true"
+      >
+        {s.initials}
+      </div>
+    );
+  }
   return (
-    <div
-      className="avatar"
-      style={{ width: size, height: size, background: s.avatarColor, fontSize: size * 0.4 }}
-      aria-hidden="true"
-    >
-      {s.initials}
-    </div>
+    <img
+      className="avatar avatar-img"
+      src={`/avatars/${s.id}.jpg`}
+      width={size}
+      height={size}
+      style={{ width: size, height: size }}
+      alt=""
+      onError={() => setFailed(true)}
+    />
   );
 }
 
