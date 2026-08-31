@@ -213,8 +213,7 @@ export default function App() {
       {progress.phase === 'design' && <Design />}
 
       <footer className="foot">
-        A personal training design sample by Andre Johnson, Ace Hardware store manager. Not an
-        official Ace Hardware product.
+        A personal training design sample by Andre Johnson. Not an official Ace Hardware product.
       </footer>
     </div>
   );
