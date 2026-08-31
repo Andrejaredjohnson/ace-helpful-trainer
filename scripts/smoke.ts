@@ -5,11 +5,11 @@ import { runClaude, personaSystemPrompt, evaluatorSystemPrompt, transcriptText }
 const messages = [
   {
     role: 'customer' as const,
-    text: "Well hi there, sweetheart! My granddaughter is staying with me this summer, so I am FINALLY painting that guest room. It's had the same wallpaper since Reagan was in office. Anyway — where do you keep your paint rollers?",
+    text: "Well hi there, sweetheart! My granddaughter is staying with me this summer, so I am FINALLY painting that guest room. It's had the same wallpaper since Reagan was in office. Anyway, where do you keep your paint rollers?",
   },
   {
     role: 'employee' as const,
-    text: "Rollers are in aisle 9, right side — I'll walk you over. Quick thing though: if that wallpaper's staying up, you'll want a coat of primer first so the paint sticks, and grab some painter's tape so you're not freehanding around the trim.",
+    text: "Rollers are in aisle 9, right side, I'll walk you over. Quick thing though: if that wallpaper's staying up, you'll want a coat of primer first so the paint sticks, and grab some painter's tape so you're not freehanding around the trim.",
   },
 ];
 

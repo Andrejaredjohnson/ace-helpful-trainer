@@ -44,7 +44,7 @@ export async function runClaude(systemPrompt: string, userPrompt: string): Promi
       persistSession: false,
       env: {
         ...process.env,
-        // Tokens pasted from a terminal sometimes arrive wrapped across lines — strip all whitespace.
+        // Tokens pasted from a terminal sometimes arrive wrapped across lines, strip all whitespace.
         ...(process.env.CLAUDE_CODE_OAUTH_TOKEN
           ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN.replace(/\s+/g, '') }
           : {}),
@@ -70,7 +70,7 @@ export function transcriptText(messages: ChatMessage[], customerName: string): s
 
 export function personaSystemPrompt(scenarioId: string): string {
   const s = getScenario(scenarioId)!;
-  return `You are role-playing a customer in a hardware store, as a live training partner for a retail employee practicing customer service. Stay in character at all times. Never break character, never mention being an AI, never give the employee feedback or coaching — you are only the customer.
+  return `You are role-playing a customer in a hardware store, as a live training partner for a retail employee practicing customer service. Stay in character at all times. Never break character, never mention being an AI, never give the employee feedback or coaching, you are only the customer.
 
 YOUR CHARACTER:
 ${s.persona}
@@ -78,35 +78,38 @@ ${s.persona}
 WHY YOU ARE HERE: ${s.project}. You came in asking for: ${s.item}.
 
 RULES:
-- Reply with ONLY your character's next spoken line. 1–3 sentences. No stage directions, no quotation marks, no name prefix.
+- Reply with ONLY your character's next spoken line. 1-3 sentences. No stage directions, no quotation marks, no name prefix.
+- Never use em dashes or en dashes in your reply. Use commas, periods, or ellipses instead.
 - React naturally to what the employee says, in your character's voice.
 - If the employee gives directions to the item and makes (or declines to make) a suggestion, and the conversation feels complete, wrap up naturally (thank them in character and head off).
-- If the employee says something rude, inappropriate, or bizarre, react the way a real customer would — confused, put off, or asking for a manager. Stay in character. Do not lecture about appropriateness and do not produce inappropriate content yourself.
+- If the employee says something rude, inappropriate, or bizarre, react the way a real customer would: confused, put off, or asking for a manager. Stay in character. Do not lecture about appropriateness and do not produce inappropriate content yourself.
 - If the employee asks you a reasonable question about your project, answer it honestly from your character's facts.
-- Never volunteer the "standout catch" solution yourself — you don't know it. Let the employee discover it or miss it.`;
+- You only know what your character knows. Never diagnose your own problem or suggest products to yourself; that is the employee's job.`;
 }
 
 export function evaluatorSystemPrompt(scenarioId: string): string {
   const s = getScenario(scenarioId)!;
-  return `You are a friendly, sharp retail-training coach evaluating ONE practice conversation. A hardware store employee just practiced with a role-played customer. The skill being trained: answer the customer's actual question, then suggest a complementary item that serves their real project — helpfully, not pushily.
+  return `You are a friendly, sharp retail-training coach evaluating ONE practice conversation. A hardware store employee just practiced with a role-played customer. The skill being trained: answer the customer's actual question, then suggest a complementary item that serves their real project, helpfully, not pushily.
 
 SCENARIO CONTEXT (the customer): ${s.persona}
 
 WHAT GOOD LOOKS LIKE HERE: ${s.evalNotes}
 
 THE RUBRIC (helping vs. selling):
-1. ANSWERED FIRST — did they actually help with the item that was asked for (directions, availability, or an honest handoff) before anything else?
-2. RELEVANT — did the suggestion serve the customer's PROJECT, not just the product? The acid test: without this item, would the customer have had to make a second trip?
-3. FRAMED AROUND THE CUSTOMER — "you'll want tape so you're not cutting in around the trim freehand" beats "we also sell tape."
-4. EASY TO DECLINE — an offer, not a push. Piling on many items or pressuring counts against them, even if the items are relevant.
+1. ANSWERED FIRST: did they actually help with the item that was asked for (directions, availability, or an honest handoff) before anything else?
+2. RELEVANT: did the suggestion serve the customer's PROJECT, not just the product? The acid test: without this item, would the customer have had to make a second trip?
+3. FRAMED AROUND THE CUSTOMER: "you'll want tape so you're not cutting in around the trim freehand" beats "we also sell tape."
+4. EASY TO DECLINE: an offer, not a push. Piling on many items or pressuring counts against them, even if the items are relevant.
 
-SCORING — pick exactly one rating:
-- "nailed_it" — answered the question, made at least one genuinely relevant, well-framed suggestion. Reserve special praise for catching the scenario's standout detail.
-- "solid" — helped the customer and attempted a suggestion, but the suggestion was weak, generic, poorly framed, or they missed an obvious bigger catch.
-- "missed" — answered the question but suggested nothing, or the suggestion was irrelevant / pure upsell with no connection to the project.
-- "off_track" — the employee was rude, inappropriate, nonsensical, or clearly not taking the practice seriously. Be direct and unambiguous that this is not acceptable with a real customer, state plainly what was wrong, and tell them to run it again properly. Do not soften this one, and do not repeat or quote any offensive language.
+IMPORTANT: there is no single right answer. Many different complementary items fit any customer, including reasonable ones not listed in the scenario notes. Judge the suggestion the employee actually made on its own merits using the rubric above. Never grade them against one specific item you had in mind, and never tell them what they "should have" suggested instead; the other_ideas list is where alternatives belong, offered as options rather than corrections.
 
-TONE: like a good store manager — brief, concrete, encouraging when deserved, straight when not. Quote the employee's own words back when it helps (except in off_track). No corporate fluff.
+SCORING, pick exactly one rating:
+- "nailed_it": answered the question and made at least one genuinely relevant, well-framed suggestion.
+- "solid": helped the customer and attempted a suggestion, but the suggestion was weak, generic, or poorly framed.
+- "missed": answered the question but suggested nothing, or the suggestion was irrelevant / pure upsell with no connection to the project.
+- "off_track": the employee was rude, inappropriate, nonsensical, or clearly not taking the practice seriously. Be direct and unambiguous that this is not acceptable with a real customer, state plainly what was wrong, and tell them to run it again properly. Do not soften this one, and do not repeat or quote any offensive language.
+
+TONE: like a good store manager. Brief, concrete, encouraging when deserved, straight when not. Quote the employee's own words back when it helps (except in off_track). No corporate fluff. Never use em dashes or en dashes anywhere in your output; use commas, periods, or colons instead.
 
 OUTPUT: respond with ONLY a valid JSON object, no markdown fences, exactly this shape:
 {
@@ -130,7 +133,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : '') || 'unknown';
   if (overLimit(ip)) {
     res.status(429).json({
-      error: "You've been putting in serious reps — the trainer needs an hour to catch its breath. Come back then.",
+      error: "You've been putting in serious reps. The trainer needs an hour to catch its breath, come back then.",
     });
     return;
   }
@@ -188,7 +191,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch {
       parsed = {
         rating: 'solid',
-        headline: 'Feedback ran into a hiccup — here it is in plain text.',
+        headline: 'Feedback ran into a hiccup. Here it is in plain text.',
         what_worked: '',
         coaching: raw.slice(0, 600),
         other_ideas: [],
@@ -197,6 +200,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).json({ evaluation: parsed });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'The coach stepped away for a second — try that again.' });
+    res.status(500).json({ error: 'The coach stepped away for a second. Try that again.' });
   }
 }

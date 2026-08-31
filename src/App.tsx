@@ -67,7 +67,7 @@ async function api(body: object): Promise<{ text?: string; evaluation?: Evaluati
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as { error?: string }).error || 'Something went sideways — try again.');
+    throw new Error((err as { error?: string }).error || 'Something went sideways. Try again.');
   }
   return res.json();
 }
@@ -221,7 +221,7 @@ function Landing({ hasProgress, onStart }: { hasProgress: boolean; onStart: (fre
         They come in to paint a room.
       </h1>
       <p className="lede">
-        When we hand a customer the item and nothing else, they end up making a second trip — and
+        When we hand a customer the item and nothing else, they end up making a second trip, and
         the second trip usually isn&rsquo;t to us. Suggesting the one thing they&rsquo;ll be glad
         they didn&rsquo;t forget is the difference between ringing up a product and actually helping
         with a project. Three customers are about to walk in: answer their question, then suggest
@@ -337,7 +337,7 @@ function Trainer(props: {
         <div className="composer">
           {employeeTurns > 0 && (
             <button className="btn-finish" onClick={evaluate} disabled={busy !== null}>
-              {busy === 'evaluate' ? 'Your coach is thinking…' : "I'm done — how'd I do?"}
+              {busy === 'evaluate' ? 'Your coach is thinking…' : "I'm done, how'd I do?"}
             </button>
           )}
           <div className="input-row">
@@ -437,7 +437,7 @@ function Done({
 }) {
   return (
     <main className="card landing">
-      <p className="kicker">That&rsquo;s the whole thing — about five minutes</p>
+      <p className="kicker">That&rsquo;s the whole thing, about five minutes</p>
       <h1>Three customers, three chances to save a second trip.</h1>
       <ul className="recap">
         {SCENARIOS.map((s) => {
@@ -457,7 +457,7 @@ function Done({
         })}
       </ul>
       <p className="lede">
-        Same skill, three very different people — because the item is never the hard part. Reading
+        Same skill, three very different people, because the item is never the hard part. Reading
         the project behind it is.
       </p>
       <button className="btn-primary" onClick={onDesign}>
@@ -481,7 +481,7 @@ function Design() {
       <section>
         <h3>It lives on the floor</h3>
         <p>
-          Training that requires a back room and a spare hour doesn&rsquo;t happen — we need people
+          Training that requires a back room and a spare hour doesn&rsquo;t happen, we need people
           on the floor. This runs on a scan gun, a floor terminal, or a phone, one scenario at a
           time. And it&rsquo;s <strong>droppable</strong>: a real customer walks up, you set it
           down, help them, and pick up exactly where you left off. Progress saves itself.
@@ -493,7 +493,7 @@ function Design() {
         <p>
           Click-next modules test whether you can find the Next button. Here you type what
           you&rsquo;d actually say, to a customer with an actual personality, and the feedback
-          responds to <em>your</em> words. That&rsquo;s retrieval practice on the real behavior —
+          responds to <em>your</em> words. That&rsquo;s retrieval practice on the real behavior:
           the same rep you&rsquo;ll perform an hour later in aisle 12.
         </p>
       </section>
@@ -503,7 +503,7 @@ function Design() {
         <p>
           The rubric behind the feedback has one acid test: <strong>would the customer have had to
           make a second trip without this item?</strong> If yes, suggesting it is service. If no,
-          it&rsquo;s an upsell wearing a helpful costume — and the coach scores it that way.
+          it&rsquo;s an upsell wearing a helpful costume, and the coach scores it that way.
           Answer the question first, tie the suggestion to their project, keep it easy to decline.
         </p>
       </section>
@@ -513,22 +513,24 @@ function Design() {
         <p>
           Three sentences up front, then a customer. That&rsquo;s deliberate: every paragraph of
           preamble costs completions, and a training tool nobody finishes teaches nobody anything.
-          The theory lives back here, where the curious can find it — not in front of the learner.
+          The theory lives back here, where the curious can find it, not in front of the learner.
         </p>
       </section>
 
       <section>
         <h3>Where it would go next</h3>
         <p>
-          More scenarios by department, voices for the customers, a manager view of common misses
-          across the team, and rotating &ldquo;standout catches&rdquo; drawn from real floor
-          situations — the wallpaper detail, the third flapper — because the best training material
-          is the stuff that actually happens.
+          More scenarios by department, voices for the customers, and a manager view of common
+          misses across the team. Then a more advanced tool for a harder skill: scenarios where the
+          customer&rsquo;s real problem hides behind their question (a guy on his third flapper this
+          year, wallpaper under the paint) and the practice is finding the project behind the
+          purchase. This one stays focused on a single rep: suggest the item they&rsquo;ll be glad
+          they didn&rsquo;t forget.
         </p>
       </section>
 
       <p className="byline">
-        Built by Andre Johnson — Ace Hardware store manager. Every scenario is something I&rsquo;ve
+        Built by Andre Johnson, Ace Hardware store manager. Every scenario is something I&rsquo;ve
         watched happen on my own sales floor.
       </p>
     </main>
