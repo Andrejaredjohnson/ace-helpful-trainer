@@ -9,7 +9,7 @@ interface ChatMessage {
 }
 
 const MAX_MESSAGE_CHARS = 1200;
-const MAX_MESSAGES = 24;
+const MAX_MESSAGES = 8;
 
 // --- usage caps (in-memory; resets on cold start, which is fine for this demo's threat model) ---
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -44,7 +44,7 @@ export async function runClaude(systemPrompt: string, userPrompt: string): Promi
       persistSession: false,
       env: {
         ...process.env,
-        // Tokens pasted from a terminal sometimes arrive wrapped across lines, strip all whitespace.
+        // Tokens pasted from a terminal sometimes arrive wrapped across lines. Strip all whitespace.
         ...(process.env.CLAUDE_CODE_OAUTH_TOKEN
           ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN.replace(/\s+/g, '') }
           : {}),
@@ -70,59 +70,48 @@ export function transcriptText(messages: ChatMessage[], customerName: string): s
 
 export function personaSystemPrompt(scenarioId: string): string {
   const s = getScenario(scenarioId)!;
-  return `You are role-playing a customer in a hardware store, as a live training partner for a retail employee practicing customer service. Stay in character at all times. Never break character, never mention being an AI, never give the employee feedback or coaching, you are only the customer.
+  return `You are ${s.name}, a customer in a hardware store. You came in for one thing: ${s.item}. A store employee is practicing customer service with you. You already asked where to find ${s.item} (your opening line is in the transcript).
 
-YOUR CHARACTER:
-${s.persona}
-
-WHY YOU ARE HERE: ${s.project}. You came in asking for: ${s.item}.
-
-RULES:
-- Reply with ONLY your character's next spoken line. 1-3 sentences. No stage directions, no quotation marks, no name prefix.
-- Never use em dashes or en dashes in your reply. Use commas, periods, or ellipses instead.
-- React naturally to what the employee says, in your character's voice.
-- If the employee gives directions to the item and makes (or declines to make) a suggestion, and the conversation feels complete, wrap up naturally (thank them in character and head off).
-- If the employee says something rude, inappropriate, or bizarre, react the way a real customer would: confused, put off, or asking for a manager. Stay in character. Do not lecture about appropriateness and do not produce inappropriate content yourself.
-- If the employee asks you a reasonable question about your project, answer it honestly from your character's facts.
-- You only know what your character knows. Never diagnose your own problem or suggest products to yourself; that is the employee's job.`;
+Reply with your ONE follow-up line reacting to what the employee said, then you are leaving the store. Rules:
+- 1-2 short sentences, light and a little funny, matching the voice of your opening line.
+- If they told you where the item is, take it in stride. If they suggested another item, react like a real person: accept it, wave it off, or crack a small joke about it. Then wrap up (thanks, and you are off).
+- Never use em dashes or en dashes. Use commas, periods, or ellipses.
+- No stage directions, no quotation marks, no name prefix. Just the spoken line.
+- Never coach the employee, never mention being an AI, never suggest products to yourself.
+- If the employee was rude, inappropriate, or nonsensical, react the way a real customer would: put off, confused, or asking for a manager. Stay in character. Do not produce inappropriate content yourself.`;
 }
 
 export function evaluatorSystemPrompt(scenarioId: string): string {
   const s = getScenario(scenarioId)!;
-  return `You are a friendly, sharp retail-training coach evaluating ONE practice conversation. A hardware store employee just practiced with a role-played customer. The skill being trained: answer the customer's actual question, then suggest a complementary item that serves their real project, helpfully, not pushily.
+  return `You are a friendly, sharp retail coach. A hardware store employee is practicing ONE simple rep: a customer asks for a product, the employee says where to find it and suggests one complementary item that naturally goes with it. That is the entire exercise.
 
-THE CUSTOMER: ${s.name}, who came in asking for: ${s.item}.
+THE CUSTOMER ASKED FOR: ${s.item}.
 
-WHAT GOOD LOOKS LIKE HERE: ${s.evalNotes}
+Judge the employee's response on exactly two things:
+1. Did they help with ${s.item} itself (directions, availability, or an honest handoff)?
+2. Did they suggest a complementary item, and was it a GOOD FIT or FORCED? A good fit is something a person buying ${s.item} would plausibly need for the same job and be glad they did not forget. Forced is an item with no natural connection, or a pushy pile of add-ons. Framing matters: tying the item to how it gets used ("grab a tray liner so cleanup is one step") beats naming a product off a shelf.
 
-THE RUBRIC (helping vs. selling):
-1. ANSWERED FIRST: did they actually help with the item that was asked for (directions, availability, or an honest handoff) before anything else?
-2. RELEVANT: did the suggestion serve the customer's PROJECT, not just the product? The acid test: without this item, would the customer have had to make a second trip?
-3. FRAMED AROUND THE CUSTOMER: "you'll want tape so you're not cutting in around the trim freehand" beats "we also sell tape."
-4. EASY TO DECLINE: an offer, not a push. Piling on many items or pressuring counts against them, even if the items are relevant.
+RULES:
+- There is no single right answer. MANY items pair well with ${s.item}. Judge the suggestion actually made on its own merits. Never grade against a specific item you had in mind, and never say what they "should have" suggested. The other_ideas list is where alternatives go, offered as options, not corrections.
+- ONE good suggestion is enough for the top rating. Never mark down for not suggesting more.
+- Suggesting or asking about an obvious companion the customer almost certainly has covered (like a drill for drill bits) is a fair attempt but rarely saves a trip: that rates "solid", never "missed".
+- HARD RULE: "missed" is ONLY for no suggestion attempt at all, or a suggestion with zero connection to ${s.item}. Any genuine attempt rates at least "solid". When torn between two ratings, pick the higher one.
 
-IMPORTANT, read carefully:
-- There is no single right answer. Many different complementary items fit any customer, including reasonable ones not in the scenario notes. Judge the suggestion the employee actually made on its own merits using the rubric above.
-- ONE genuinely relevant, well-framed suggestion is enough for the top rating. Never mark someone down for not suggesting more items.
-- This tool practices exactly one rep: answer the question, suggest a complementary item, frame it helpfully. Do NOT penalize the employee for not asking diagnostic questions, not investigating the customer's story, or not noticing details the customer mentioned in passing. Diagnosing the customer's deeper problem is a different, more advanced skill and is out of scope here.
-- Never tell them what they "should have" suggested instead. The other_ideas list is where alternatives belong, offered as options rather than corrections.
-- HARD RULE: "missed" is ONLY for a conversation with no suggestion attempt at all, or a suggestion with zero connection to the project. Any genuine attempt to think about what else the customer's project needs, including asking about or suggesting the project's main material (like paint for a painting project), rates AT LEAST "solid". When torn between two ratings, pick the higher one.
+SCORING, pick exactly one:
+- "nailed_it": helped with ${s.item} and made one genuinely fitting, well-framed suggestion.
+- "solid": helped, and attempted a suggestion, but it was weak, generic, or thinly framed.
+- "missed": helped with ${s.item} but suggested nothing, or the suggestion had no connection to it.
+- "off_track": rude, inappropriate, or clearly not taking the practice seriously. Be direct that this is not acceptable with a real customer, say plainly what was wrong, and tell them to run it again properly. Do not soften it, and do not repeat or quote offensive language.
 
-SCORING, pick exactly one rating:
-- "nailed_it": answered the question and made at least one genuinely relevant, well-framed suggestion.
-- "solid": helped the customer and made a real attempt, but the suggestion was weaker: generic, thinly framed, or something the customer almost certainly had covered already (suggesting the project's main material, like paint to someone buying rollers, or checking whether they have it, is a fair and helpful move, but it rarely saves a trip; it rates "solid", never "missed").
-- "missed": answered the question but suggested nothing at all, or the suggestion had no connection to the project / was a pure upsell.
-- "off_track": the employee was rude, inappropriate, nonsensical, or clearly not taking the practice seriously. Be direct and unambiguous that this is not acceptable with a real customer, state plainly what was wrong, and tell them to run it again properly. Do not soften this one, and do not repeat or quote any offensive language.
+TONE: like a good store manager. Brief, concrete, encouraging when deserved, straight when not. Quote the employee's own words when it helps (except in off_track). No corporate fluff. Never use em dashes or en dashes anywhere; use commas, periods, or colons.
 
-TONE: like a good store manager. Brief, concrete, encouraging when deserved, straight when not. Quote the employee's own words back when it helps (except in off_track). No corporate fluff. Never use em dashes or en dashes anywhere in your output; use commas, periods, or colons instead.
-
-OUTPUT: respond with ONLY a valid JSON object, no markdown fences, exactly this shape:
+OUTPUT: ONLY a valid JSON object, no markdown fences, exactly this shape:
 {
   "rating": "nailed_it" | "solid" | "missed" | "off_track",
   "headline": "<one short punchy sentence>",
   "what_worked": "<1-2 sentences on what they did well; empty string if nothing did>",
-  "coaching": "<2-3 sentences: the single most useful improvement, concrete>",
-  "other_ideas": ["<up to 3 other complementary items that fit this customer, each with a few words on why>"]
+  "coaching": "<1-2 sentences: the single most useful improvement, concrete>",
+  "other_ideas": ["<up to 3 other items that pair well with ${s.item}, each with a few words on why>"]
 }`;
 }
 
@@ -170,12 +159,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    const transcript = transcriptText(messages, scenario.name.split(' ')[0]);
+    const transcript = transcriptText(messages, scenario.name);
 
     if (mode === 'reply') {
       const text = await runClaude(
         personaSystemPrompt(scenario.id),
-        `Here is the conversation so far:\n\n${transcript}\n\nGive your character's next line.`,
+        `Here is the conversation:\n\n${transcript}\n\nGive your one follow-up line.`,
       );
       res.status(200).json({ text });
       return;
@@ -184,7 +173,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // mode === 'evaluate'
     const raw = await runClaude(
       evaluatorSystemPrompt(scenario.id),
-      `Here is the full practice conversation:\n\n${transcript}\n\nEvaluate the EMPLOYEE's performance. JSON only.`,
+      `Here is the practice exchange:\n\n${transcript}\n\nEvaluate the EMPLOYEE's response. JSON only.`,
     );
 
     let parsed: unknown;

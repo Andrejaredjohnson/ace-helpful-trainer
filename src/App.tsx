@@ -16,16 +16,17 @@ interface Evaluation {
   other_ideas: string[];
 }
 
-type Phase = 'landing' | 'chat' | 'feedback' | 'done' | 'design';
+type Phase = 'landing' | 'chat' | 'done' | 'design';
 
 interface Progress {
   phase: Phase;
   scenarioIndex: number;
   transcripts: Record<string, ChatMessage[]>;
   evaluations: Record<string, Evaluation>;
+  skipped: string[];
 }
 
-const STORAGE_KEY = 'ace-helpful-trainer-v1';
+const STORAGE_KEY = 'ace-helpful-trainer-v2';
 
 const RATING_META: Record<Evaluation['rating'], { label: string; color: string; bg: string }> = {
   nailed_it: { label: 'Nailed it', color: '#1E7A46', bg: '#E7F3EC' },
@@ -36,17 +37,21 @@ const RATING_META: Record<Evaluation['rating'], { label: string; color: string; 
 
 // ---------- persistence (droppable by design) ----------
 
+function freshProgress(phase: Phase = 'landing'): Progress {
+  return { phase, scenarioIndex: 0, transcripts: {}, evaluations: {}, skipped: [] };
+}
+
 function loadProgress(): Progress {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw) as Progress;
-      if (p && typeof p.scenarioIndex === 'number' && p.phase !== 'design') return p;
+      if (p && typeof p.scenarioIndex === 'number' && Array.isArray(p.skipped) && p.phase !== 'design') return p;
     }
   } catch {
     /* fresh start */
   }
-  return { phase: 'landing', scenarioIndex: 0, transcripts: {}, evaluations: {} };
+  return freshProgress();
 }
 
 function saveProgress(p: Progress) {
@@ -75,11 +80,11 @@ async function api(body: object): Promise<{ text?: string; evaluation?: Evaluati
 // ---------- small pieces ----------
 
 function Avatar({ s, size = 44 }: { s: Scenario; size?: number }) {
-  // Placeholder until real photos arrive: colored disc + initials.
+  // Placeholder until real photos arrive: colored disc + initial.
   return (
     <div
       className="avatar"
-      style={{ width: size, height: size, background: s.avatarColor, fontSize: size * 0.36 }}
+      style={{ width: size, height: size, background: s.avatarColor, fontSize: size * 0.4 }}
       aria-hidden="true"
     >
       {s.initials}
@@ -111,24 +116,33 @@ export default function App() {
 
   const scenario = SCENARIOS[progress.scenarioIndex] ?? SCENARIOS[0];
 
+  const advance = (extra: Partial<Progress> = {}) => {
+    if (progress.scenarioIndex + 1 < SCENARIOS.length) {
+      update({ ...extra, phase: 'chat', scenarioIndex: progress.scenarioIndex + 1 });
+    } else {
+      update({ ...extra, phase: 'done' });
+    }
+  };
+
   const openDesign = () => {
     setReturnPhase(progress.phase);
     setProgress((p) => ({ ...p, phase: 'design' }));
   };
   const closeDesign = () => setProgress((p) => ({ ...p, phase: returnPhase }));
 
+  const started =
+    Object.keys(progress.evaluations).length > 0 ||
+    progress.skipped.length > 0 ||
+    Object.keys(progress.transcripts).length > 0;
+
   return (
     <div className="shell">
       <header className="topbar">
-        <button
-          className="brand"
-          onClick={() => update({ phase: 'landing' })}
-          aria-label="Home"
-        >
+        <button className="brand" onClick={() => update({ phase: 'landing' })} aria-label="Home">
           <span className="brand-mark">H</span>
           <span className="brand-name">Helpful&nbsp;Trainer</span>
         </button>
-        {progress.phase !== 'design' && progress.phase !== 'landing' && progress.phase !== 'done' && (
+        {progress.phase === 'chat' && (
           <span className="topbar-step">
             Customer {progress.scenarioIndex + 1} of {SCENARIOS.length}
           </span>
@@ -140,58 +154,47 @@ export default function App() {
 
       {progress.phase === 'landing' && (
         <Landing
-          hasProgress={Object.keys(progress.evaluations).length > 0 || (progress.transcripts[scenario.id]?.length ?? 0) > 1}
+          hasProgress={started}
           onStart={(fresh) => {
             if (fresh) {
-              const cleared: Progress = { phase: 'chat', scenarioIndex: 0, transcripts: {}, evaluations: {} };
+              const cleared = freshProgress('chat');
               saveProgress(cleared);
               setProgress(cleared);
             } else {
-              update({ phase: Object.keys(progress.evaluations).length >= SCENARIOS.length ? 'done' : 'chat' });
+              update({ phase: 'chat' });
             }
           }}
         />
       )}
 
-      {(progress.phase === 'chat' || progress.phase === 'feedback') && (
+      {progress.phase === 'chat' && (
         <Trainer
           key={scenario.id}
           scenario={scenario}
           savedTranscript={progress.transcripts[scenario.id]}
           savedEvaluation={progress.evaluations[scenario.id]}
-          phase={progress.phase}
-          onTranscript={(msgs) =>
-            update({ transcripts: { ...progress.transcripts, [scenario.id]: msgs } })
-          }
-          onEvaluated={(ev) =>
-            update({
-              phase: 'feedback',
-              evaluations: { ...progress.evaluations, [scenario.id]: ev },
-            })
-          }
+          isLast={progress.scenarioIndex + 1 >= SCENARIOS.length}
+          onTranscript={(msgs) => update({ transcripts: { ...progress.transcripts, [scenario.id]: msgs } })}
+          onEvaluated={(ev) => update({ evaluations: { ...progress.evaluations, [scenario.id]: ev } })}
           onRetry={() => {
             const t = { ...progress.transcripts };
             delete t[scenario.id];
             const e = { ...progress.evaluations };
             delete e[scenario.id];
-            update({ phase: 'chat', transcripts: t, evaluations: e });
+            update({ transcripts: t, evaluations: e });
           }}
-          onNext={() => {
-            if (progress.scenarioIndex + 1 < SCENARIOS.length) {
-              update({ phase: 'chat', scenarioIndex: progress.scenarioIndex + 1 });
-            } else {
-              update({ phase: 'done' });
-            }
+          onSkip={() => {
+            advance({ skipped: [...progress.skipped.filter((id) => id !== scenario.id), scenario.id] });
           }}
-          isLast={progress.scenarioIndex + 1 >= SCENARIOS.length}
+          onNext={() => advance()}
         />
       )}
 
       {progress.phase === 'done' && (
         <Done
-          evaluations={progress.evaluations}
+          progress={progress}
           onRestart={() => {
-            const cleared: Progress = { phase: 'chat', scenarioIndex: 0, transcripts: {}, evaluations: {} };
+            const cleared = freshProgress('chat');
             saveProgress(cleared);
             setProgress(cleared);
           }}
@@ -214,20 +217,19 @@ export default function App() {
 function Landing({ hasProgress, onStart }: { hasProgress: boolean; onStart: (fresh: boolean) => void }) {
   return (
     <main className="card landing">
-      <p className="kicker">5-minute practice · 3 customers</p>
+      <p className="kicker">2-minute practice &middot; 3 customers</p>
       <h1>
         Nobody comes in for a roller.
         <br />
         They come in to paint a room.
       </h1>
       <p className="lede">
-        When we hand a customer the item and nothing else, they end up making a second trip, and
-        the second trip usually isn&rsquo;t to us. Suggesting the one thing they&rsquo;ll be glad
-        they didn&rsquo;t forget is the difference between ringing up a product and actually helping
-        with a project. Three customers are about to walk in: answer their question, then suggest
-        one complementary item that fits &mdash; and you&rsquo;ll get honest feedback on how it landed.
+        The customers about to walk in each want one thing. Tell them where to find it, then
+        suggest one item that goes with it, the thing they&rsquo;ll be glad they didn&rsquo;t
+        forget. You&rsquo;ll get quick, honest feedback on whether your suggestion fit or felt
+        forced. That&rsquo;s the whole game.
       </p>
-      <button className="btn-primary" onClick={() => onStart(!hasProgress ? true : false)}>
+      <button className="btn-primary" onClick={() => onStart(!hasProgress)}>
         {hasProgress ? 'Pick up where you left off' : 'Meet your first customer'}
       </button>
       {hasProgress && (
@@ -239,17 +241,17 @@ function Landing({ hasProgress, onStart }: { hasProgress: boolean; onStart: (fre
   );
 }
 
-// ---------- trainer (chat + feedback) ----------
+// ---------- trainer ----------
 
 function Trainer(props: {
   scenario: Scenario;
   savedTranscript?: ChatMessage[];
   savedEvaluation?: Evaluation;
-  phase: 'chat' | 'feedback';
   isLast: boolean;
   onTranscript: (msgs: ChatMessage[]) => void;
   onEvaluated: (ev: Evaluation) => void;
   onRetry: () => void;
+  onSkip: () => void;
   onNext: () => void;
 }) {
   const { scenario } = props;
@@ -261,47 +263,53 @@ function Trainer(props: {
   const [error, setError] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
 
+  const answered = messages.some((m) => m.role === 'employee');
+  const evaluation = props.savedEvaluation;
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, busy, props.phase]);
+  }, [messages, busy, evaluation]);
 
-  const employeeTurns = messages.filter((m) => m.role === 'employee').length;
+  // Resume mid-scenario: answered but no feedback yet (page was dropped). Fetch the evaluation.
+  useEffect(() => {
+    if (answered && !evaluation && !busy) void evaluate(messages);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function evaluate(msgs: ChatMessage[]) {
+    setBusy('evaluate');
+    setError('');
+    try {
+      const { evaluation: ev } = await api({ scenarioId: scenario.id, messages: msgs, mode: 'evaluate' });
+      if (ev) props.onEvaluated(ev);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
 
   const send = async () => {
     const text = draft.trim();
-    if (!text || busy) return;
-    const next: ChatMessage[] = [...messages, { role: 'employee', text }];
-    setMessages(next);
-    props.onTranscript(next);
+    if (!text || busy || answered) return;
+    const withMine: ChatMessage[] = [...messages, { role: 'employee', text }];
+    setMessages(withMine);
+    props.onTranscript(withMine);
     setDraft('');
     setError('');
     setBusy('reply');
+    let finalMsgs = withMine;
     try {
-      const { text: reply } = await api({ scenarioId: scenario.id, messages: next, mode: 'reply' });
-      if (reply) {
-        const withReply: ChatMessage[] = [...next, { role: 'customer', text: reply }];
-        setMessages(withReply);
-        props.onTranscript(withReply);
+      const { text: bounce } = await api({ scenarioId: scenario.id, messages: withMine, mode: 'reply' });
+      if (bounce) {
+        finalMsgs = [...withMine, { role: 'customer', text: bounce }];
+        setMessages(finalMsgs);
+        props.onTranscript(finalMsgs);
       }
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(null);
+    } catch {
+      // The bounce is color, not substance. If it fails, go straight to feedback.
     }
-  };
-
-  const evaluate = async () => {
-    if (busy) return;
-    setError('');
-    setBusy('evaluate');
-    try {
-      const { evaluation } = await api({ scenarioId: scenario.id, messages, mode: 'evaluate' });
-      if (evaluation) props.onEvaluated(evaluation);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
+    await evaluate(finalMsgs);
   };
 
   return (
@@ -310,8 +318,13 @@ function Trainer(props: {
         <Avatar s={scenario} />
         <div>
           <strong>{scenario.name}</strong>
-          <span className="persona-bio">{scenario.bio}</span>
+          <span className="persona-bio">Came in for {scenario.item}</span>
         </div>
+        {!answered && (
+          <button className="linkish skip" onClick={props.onSkip}>
+            Skip
+          </button>
+        )}
       </div>
 
       <div className="chat" role="log" aria-live="polite">
@@ -329,17 +342,20 @@ function Trainer(props: {
             </div>
           </div>
         )}
-        {error && <p className="error">{error}</p>}
+        {busy === 'evaluate' && <p className="thinking">Your coach is looking it over&hellip;</p>}
+        {error && (
+          <div className="error-block">
+            <p className="error">{error}</p>
+            <button className="btn-secondary" onClick={() => evaluate(messages)}>
+              Try the feedback again
+            </button>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
-      {props.phase === 'chat' ? (
+      {!answered ? (
         <div className="composer">
-          {employeeTurns > 0 && (
-            <button className="btn-finish" onClick={evaluate} disabled={busy !== null}>
-              {busy === 'evaluate' ? 'Your coach is thinking…' : "I'm done, how'd I do?"}
-            </button>
-          )}
           <div className="input-row">
             <textarea
               value={draft}
@@ -350,18 +366,18 @@ function Trainer(props: {
                   send();
                 }
               }}
-              placeholder={employeeTurns === 0 ? 'How do you respond?' : 'Keep the conversation going…'}
+              placeholder="How do you respond?"
               rows={2}
               disabled={busy !== null}
             />
             <button className="btn-send" onClick={send} disabled={busy !== null || !draft.trim()} aria-label="Send">
-              ➤
+              &#10148;
             </button>
           </div>
         </div>
       ) : (
-        props.savedEvaluation && (
-          <Feedback ev={props.savedEvaluation} isLast={props.isLast} onRetry={props.onRetry} onNext={props.onNext} />
+        evaluation && (
+          <Feedback ev={evaluation} isLast={props.isLast} onRetry={props.onRetry} onNext={props.onNext} />
         )
       )}
     </main>
@@ -427,38 +443,40 @@ function Feedback({
 // ---------- done ----------
 
 function Done({
-  evaluations,
+  progress,
   onRestart,
   onDesign,
 }: {
-  evaluations: Record<string, Evaluation>;
+  progress: Progress;
   onRestart: () => void;
   onDesign: () => void;
 }) {
   return (
     <main className="card landing">
-      <p className="kicker">That&rsquo;s the whole thing, about five minutes</p>
-      <h1>Three customers, three chances to save a second trip.</h1>
+      <p className="kicker">That&rsquo;s the whole thing</p>
+      <h1>Three customers, three saved trips.</h1>
       <ul className="recap">
         {SCENARIOS.map((s) => {
-          const ev = evaluations[s.id];
+          const ev = progress.evaluations[s.id];
           const meta = ev ? (RATING_META[ev.rating] ?? RATING_META.solid) : null;
+          const wasSkipped = progress.skipped.includes(s.id);
           return (
             <li key={s.id}>
               <Avatar s={s} size={32} />
-              <span className="recap-name">{s.name.split(' ')[0]}</span>
-              {meta && (
+              <span className="recap-name">{s.name}</span>
+              {meta ? (
                 <span className="rating-pill small" style={{ color: meta.color, background: meta.bg }}>
                   {meta.label}
                 </span>
-              )}
+              ) : wasSkipped ? (
+                <span className="rating-pill small muted">Skipped</span>
+              ) : null}
             </li>
           );
         })}
       </ul>
       <p className="lede">
-        Same skill, three very different people, because the item is never the hard part. Reading
-        the project behind it is.
+        Same rep, three different products. The item changes. The habit doesn&rsquo;t.
       </p>
       <button className="btn-primary" onClick={onDesign}>
         Why it&rsquo;s built this way
@@ -479,12 +497,22 @@ function Design() {
       <h1>Why it&rsquo;s built this way</h1>
 
       <section>
+        <h3>One rep, drilled</h3>
+        <p>
+          This trains exactly one behavior: a customer asks for a product, you answer, and you
+          suggest one item that goes with it. No branching plots, no puzzles. The scenario is the
+          product. Keeping the rep small is what makes it repeatable, and repeatable is what makes
+          it a habit.
+        </p>
+      </section>
+
+      <section>
         <h3>It lives on the floor</h3>
         <p>
-          Training that requires a back room and a spare hour doesn&rsquo;t happen, we need people
-          on the floor. This runs on a scan gun, a floor terminal, or a phone, one scenario at a
-          time. And it&rsquo;s <strong>droppable</strong>: a real customer walks up, you set it
-          down, help them, and pick up exactly where you left off. Progress saves itself.
+          Training that requires a back room and a spare hour doesn&rsquo;t happen. We need people
+          on the floor. This runs on a scan gun, a floor terminal, or a phone, one customer at a
+          time, about forty seconds each. And it&rsquo;s droppable: a real customer walks up, you
+          set it down, help them, and pick up exactly where you left off. Progress saves itself.
         </p>
       </section>
 
@@ -492,46 +520,45 @@ function Design() {
         <h3>Practice beats presentation</h3>
         <p>
           Click-next modules test whether you can find the Next button. Here you type what
-          you&rsquo;d actually say, to a customer with an actual personality, and the feedback
-          responds to <em>your</em> words. That&rsquo;s retrieval practice on the real behavior:
-          the same rep you&rsquo;ll perform an hour later in aisle 12.
+          you&rsquo;d actually say, and the feedback responds to <em>your</em> words. That&rsquo;s
+          retrieval practice on the real behavior: the same rep you&rsquo;ll perform an hour later
+          in aisle 12.
         </p>
       </section>
 
       <section>
         <h3>Helping, not selling</h3>
         <p>
-          The rubric behind the feedback has one acid test: <strong>would the customer have had to
-          make a second trip without this item?</strong> If yes, suggesting it is service. If no,
-          it&rsquo;s an upsell wearing a helpful costume, and the coach scores it that way.
-          Answer the question first, tie the suggestion to their project, keep it easy to decline.
+          The feedback runs on one acid test: <strong>would the customer have had to make a second
+          trip without this item?</strong> If yes, suggesting it is service. If no, it&rsquo;s an
+          upsell wearing a helpful costume, and the coach scores it that way. There&rsquo;s no
+          answer key. Any item that genuinely fits, framed around how it gets used, wins.
         </p>
       </section>
 
       <section>
         <h3>Almost nothing to read</h3>
         <p>
-          Three sentences up front, then a customer. That&rsquo;s deliberate: every paragraph of
-          preamble costs completions, and a training tool nobody finishes teaches nobody anything.
-          The theory lives back here, where the curious can find it, not in front of the learner.
+          A few sentences up front, then a customer. Every paragraph of preamble costs completions,
+          and a training tool nobody finishes teaches nobody anything. The theory lives back here,
+          where the curious can find it, not in front of the learner.
         </p>
       </section>
 
       <section>
         <h3>Where it would go next</h3>
         <p>
-          More scenarios by department, voices for the customers, and a manager view of common
-          misses across the team. Then a more advanced tool for a harder skill: scenarios where the
-          customer&rsquo;s real problem hides behind their question (a guy on his third flapper this
-          year, wallpaper under the paint) and the practice is finding the project behind the
-          purchase. This one stays focused on a single rep: suggest the item they&rsquo;ll be glad
-          they didn&rsquo;t forget.
+          More products, rotated daily so the rep never goes stale. Voices for the customers. A
+          manager view of common misses across the team. Then a more advanced tool for a harder
+          skill: scenarios where the customer&rsquo;s real problem hides behind their question, and
+          the practice is finding the project behind the purchase. This one stays focused on the
+          single rep.
         </p>
       </section>
 
       <p className="byline">
-        Built by Andre Johnson, Ace Hardware store manager. Every scenario is something I&rsquo;ve
-        watched happen on my own sales floor.
+        Built by Andre Johnson, Ace Hardware store manager. The suggestion habit is the cheapest
+        revenue and loyalty lever on my floor, and the least practiced.
       </p>
     </main>
   );

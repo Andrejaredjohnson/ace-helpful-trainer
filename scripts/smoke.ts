@@ -1,30 +1,30 @@
-// Local smoke test: one persona reply + one evaluation per run.
+// Local smoke test: one persona bounce + one evaluation per run.
 // Usage: npx tsx scripts/smoke.ts
 import { runClaude, personaSystemPrompt, evaluatorSystemPrompt, transcriptText } from '../api/chat';
 
 const messages = [
   {
     role: 'customer' as const,
-    text: "Well hi there, sweetheart! My granddaughter is staying with me this summer, so I am FINALLY painting that guest room. It's had the same wallpaper since Reagan was in office. Anyway, where do you keep your paint rollers?",
+    text: "I finally lost the argument about the kitchen color. Where's your paint?",
   },
   {
     role: 'employee' as const,
-    text: "Rollers are in aisle 9, right side, I'll walk you over. Quick thing though: if that wallpaper's staying up, you'll want a coat of primer first so the paint sticks, and grab some painter's tape so you're not freehanding around the trim.",
+    text: "Paint counter is straight back, they'll mix whatever color you lost to. Grab some painter's tape on the way so your edges come out clean.",
   },
 ];
 
-const transcript = transcriptText(messages, 'Peggy');
+const transcript = transcriptText(messages, 'Rita');
 
-console.log('--- PERSONA REPLY ---');
+console.log('--- PERSONA BOUNCE ---');
 const reply = await runClaude(
-  personaSystemPrompt('peggy'),
-  `Here is the conversation so far:\n\n${transcript}\n\nGive your character's next line.`,
+  personaSystemPrompt('rita'),
+  `Here is the conversation:\n\n${transcript}\n\nGive your one follow-up line.`,
 );
 console.log(reply);
 
 console.log('\n--- EVALUATION ---');
 const evalRaw = await runClaude(
-  evaluatorSystemPrompt('peggy'),
-  `Here is the full practice conversation:\n\n${transcript}\n\nEvaluate the EMPLOYEE's performance. JSON only.`,
+  evaluatorSystemPrompt('rita'),
+  `Here is the practice exchange:\n\n${transcript}\n\nEvaluate the EMPLOYEE's response. JSON only.`,
 );
 console.log(evalRaw);
