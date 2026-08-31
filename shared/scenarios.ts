@@ -27,7 +27,7 @@ export const SCENARIOS: Scenario[] = [
     initials: 'G',
     avatarColor: '#2F5D50',
     item: 'a garden hose',
-    opener: 'My hose exploded this morning. Very dramatic. Where are your garden hoses?',
+    opener: 'Hey, where do you keep your garden hoses?',
   },
   {
     id: 'sam',
@@ -35,7 +35,7 @@ export const SCENARIOS: Scenario[] = [
     initials: 'S',
     avatarColor: '#B05A1E',
     item: 'drill bits',
-    opener: "I snapped my last drill bit doing something the drill bit apparently did not agree with. Where are your bits?",
+    opener: "I'm looking for drill bits.",
   },
 ];
 
