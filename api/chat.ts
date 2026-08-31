@@ -59,7 +59,8 @@ export async function runClaude(systemPrompt: string, userPrompt: string): Promi
       out = m.result ?? m.text ?? '';
     }
   }
-  return out.trim();
+  // The model is told not to use em or en dashes, but belt and suspenders: scrub them.
+  return out.replace(/\s*[–—]\s*/g, ', ').trim();
 }
 
 export function transcriptText(messages: ChatMessage[], customerName: string): string {

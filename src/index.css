@@ -626,6 +626,74 @@ body {
   color: var(--ink-3);
 }
 
+/* ---------- completion submit ---------- */
+
+.submit-box {
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  margin: 4px 0 14px;
+}
+
+.submit-box.submitted {
+  border-color: #1e7a46;
+  background: #e7f3ec;
+}
+
+.submit-box h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+.submit-box.submitted h3 {
+  color: #1e7a46;
+}
+
+.submit-box p {
+  margin: 0 0 12px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+.submit-box.submitted p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.submit-row {
+  display: flex;
+  gap: 8px;
+}
+
+.submit-row input {
+  flex: 1;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 15px;
+  background: var(--card);
+  color: var(--ink);
+  min-width: 0;
+}
+
+.submit-row input:focus {
+  outline: 2px solid var(--red);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.submit-btn {
+  width: auto;
+  padding: 11px 20px;
+}
+
+.submit-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 /* ---------- footer ---------- */
 
 .foot {

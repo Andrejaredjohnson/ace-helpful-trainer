@@ -24,6 +24,7 @@ interface Progress {
   transcripts: Record<string, ChatMessage[]>;
   evaluations: Record<string, Evaluation>;
   skipped: string[];
+  submittedName?: string;
 }
 
 const STORAGE_KEY = 'ace-helpful-trainer-v2';
@@ -201,6 +202,7 @@ export default function App() {
       {progress.phase === 'done' && (
         <Done
           progress={progress}
+          onSubmitted={(name) => update({ submittedName: name })}
           onRestart={() => {
             const cleared = freshProgress('chat');
             saveProgress(cleared);
@@ -226,11 +228,11 @@ function Landing({ onStart }: { onStart: () => void }) {
   return (
     <main className="card landing">
       <img className="hero" src="/hero.jpg" alt="An Ace associate helping a customer in the aisle" />
-      <h1>Help them find the item they asked for, plus the one they forgot.</h1>
+      <h1>Helpful Suggestions 101</h1>
       <p className="lede">
         When helping a customer find an item, always remember to suggest another item they may need
-        for their project. Ask for a PVC fitting? Suggest glue. Buying paint? Suggest brushes and
-        rollers.
+        for their project. If they ask for a PVC fitting, suggest glue. If they are buying paint,
+        suggest brushes and rollers.
       </p>
       <h2 className="why-head">Why do we do this?</h2>
       <section className="why">
@@ -287,6 +289,11 @@ const TUTORIAL_STEPS: TutStep[] = [
     text: "Then let's grab you a drop cloth and some painter's tape. Your counters will never know it happened.",
   },
   { kind: 'customer', text: 'Perfect. Drop cloth and tape it is, my counters thank you!' },
+  {
+    kind: 'callout',
+    text: "Rita went for it this time. Sometimes they will, sometimes they won't, and either way it's a win, because either way we were helpful.",
+    next: 'Next',
+  },
   { kind: 'feedback' },
 ];
 
@@ -655,13 +662,45 @@ function Feedback({
 
 function Done({
   progress,
+  onSubmitted,
   onRestart,
   onDesign,
 }: {
   progress: Progress;
+  onSubmitted: (name: string) => void;
   onRestart: () => void;
   onDesign: () => void;
 }) {
+  const [name, setName] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async () => {
+    const clean = name.trim();
+    if (!clean || sending) return;
+    setSending(true);
+    setError('');
+    try {
+      const res = await fetch('/api/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: clean,
+          results: SCENARIOS.map((s) => ({
+            customer: s.name,
+            rating: progress.evaluations[s.id]?.rating ?? (progress.skipped.includes(s.id) ? 'skipped' : 'none'),
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      onSubmitted(clean);
+    } catch {
+      setError('That did not go through. Try again.');
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <main className="card landing">
       <p className="kicker">That&rsquo;s the whole thing</p>
@@ -686,10 +725,40 @@ function Done({
           );
         })}
       </ul>
-      <p className="lede">
-        Same rep, three different products. The item changes. The habit doesn&rsquo;t.
-      </p>
-      <button className="btn-primary" onClick={onDesign}>
+
+      {progress.submittedName ? (
+        <div className="submit-box submitted">
+          <h3>Submitted</h3>
+          <p>
+            Nice work, {progress.submittedName}. Your completion is recorded so your manager knows
+            this training is done.
+          </p>
+        </div>
+      ) : (
+        <div className="submit-box">
+          <h3>Submit your completion</h3>
+          <p>Enter your name so your manager knows you finished the training.</p>
+          <div className="submit-row">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') submit();
+              }}
+              placeholder="Your name"
+              maxLength={80}
+              autoComplete="name"
+            />
+            <button className="btn-primary submit-btn" onClick={submit} disabled={sending || !name.trim()}>
+              {sending ? 'Submitting…' : 'Submit'}
+            </button>
+          </div>
+          {error && <p className="error">{error}</p>}
+        </div>
+      )}
+
+      <button className="linkish sub" onClick={onDesign}>
         Why it&rsquo;s built this way
       </button>
       <button className="linkish sub" onClick={onRestart}>
