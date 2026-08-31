@@ -223,10 +223,13 @@ function Landing({ onStart }: { onStart: () => void }) {
   return (
     <main className="card landing">
       <img className="hero" src="/hero.jpg" alt="An Ace associate helping a customer in the aisle" />
-      <h1>Always suggest additional items when helping customers.</h1>
+      <h1>Help them find the item they asked for, plus the one they forgot.</h1>
       <p className="lede">
-        Customer asks for a PVC fitting? Suggest glue. Buying paint? Suggest brushes and rollers.
+        When helping a customer find an item, always remember to suggest another item they may need
+        for their project. Ask for a PVC fitting? Suggest glue. Buying paint? Suggest brushes and
+        rollers.
       </p>
+      <h2 className="why-head">Why do we do this?</h2>
       <section className="why">
         <h3>It improves the customer experience</h3>
         <p>
