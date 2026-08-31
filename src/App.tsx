@@ -427,6 +427,7 @@ function Tutorial({ onDone }: { onDone: () => void }) {
 
       {current?.kind === 'callout' && (
         <div className="callout">
+          <span className="callout-tag">Tutorial</span>
           <p>{current.text}</p>
           <button className="btn-primary callout-next" onClick={() => setStep((s) => s + 1)}>
             {current.next}
@@ -436,6 +437,7 @@ function Tutorial({ onDone }: { onDone: () => void }) {
 
       {showFeedback ? (
         <div className="callout">
+          <span className="callout-tag">Tutorial</span>
           <p>After every customer, your coach tells you how the suggestion landed. Ready?</p>
           <button className="btn-primary callout-next" onClick={onDone}>
             Your turn
@@ -776,71 +778,51 @@ function Design() {
       <p className="kicker">Design notes</p>
       <h1>Why it&rsquo;s built this way</h1>
 
-      <section>
-        <h3>One rep, drilled</h3>
-        <p>
-          This trains exactly one behavior: a customer asks for a product, you answer, and you
-          offer one item that goes with it. Ask about their project first if that helps you land
-          on something useful; the conversation runs until you&rsquo;ve made an offer. No branching
-          plots, no puzzles. The scenario is the product. Keeping the rep small is what makes it
-          repeatable, and repeatable is what makes it a habit.
-        </p>
-      </section>
+      <div className="author">
+        <img className="author-pic" src="/profile.jpg" alt="Andre Johnson" />
+        <div>
+          <strong>Andre Johnson</strong>
+          <span>Ace Hardware store manager</span>
+        </div>
+      </div>
 
       <section>
-        <h3>It lives on the floor</h3>
+        <h3>Training employees can do on the floor</h3>
         <p>
-          Training that requires a back room and a spare hour doesn&rsquo;t happen. We need people
-          on the floor. This runs on a scan gun, a floor terminal, or a phone, one customer at a
-          time, about forty seconds each. And it&rsquo;s droppable: a real customer walks up, you
-          set it down, help them, and pick up exactly where you left off. Progress saves itself.
+          We usually don&rsquo;t have enough employees working to pull someone off the floor for
+          training. So I built a training employees can do while they&rsquo;re on the floor,
+          between helping customers. It&rsquo;s easy to pick up, and just as easy to put away the
+          moment a customer walks up; progress saves itself, so nothing is lost.
         </p>
       </section>
 
       <section>
         <h3>Practice beats presentation</h3>
         <p>
-          Click-next modules test whether you can find the Next button. Here you type what
-          you&rsquo;d actually say, and the feedback responds to <em>your</em> words. That&rsquo;s
-          retrieval practice on the real behavior: the same rep you&rsquo;ll perform an hour later
-          in aisle 12.
+          Reading about what you&rsquo;re supposed to do is not the same as doing it. It&rsquo;s
+          far more helpful to practice in a scenario that&rsquo;s as realistic as possible, and
+          repetition is what makes employees confident enough to use the skill with a real
+          customer.
         </p>
       </section>
 
       <section>
-        <h3>Helping, not selling</h3>
+        <h3>Less is more</h3>
         <p>
-          The feedback runs on one acid test: <strong>would the customer have had to make a second
-          trip without this item?</strong> If yes, suggesting it is service. If no, it&rsquo;s an
-          upsell wearing a helpful costume, and the coach scores it that way. There&rsquo;s no
-          answer key. Any item that genuinely fits, framed around how it gets used, wins.
+          The training is deliberately simple and succinct so it quickly turns into real action:
+          one page that teaches the principle, then immediately practicing it. A manager could
+          hand this to the whole team on a given day and have everyone finished that same day.
         </p>
       </section>
 
       <section>
-        <h3>Almost nothing to read</h3>
+        <h3>Where this app could go next</h3>
         <p>
-          A few sentences up front, then a customer. Every paragraph of preamble costs completions,
-          and a training tool nobody finishes teaches nobody anything. The theory lives back here,
-          where the curious can find it, not in front of the learner.
+          This tool focuses on one specific skill, suggesting additional items. But every aspect
+          of customer service could be practiced this same way: handling customer complaints,
+          asking open-ended questions about a project, and more.
         </p>
       </section>
-
-      <section>
-        <h3>Where it would go next</h3>
-        <p>
-          More products, rotated daily so the rep never goes stale. Voices for the customers. A
-          manager view of common misses across the team. Then a more advanced tool for a harder
-          skill: scenarios where the customer&rsquo;s real problem hides behind their question, and
-          the practice is finding the project behind the purchase. This one stays focused on the
-          single rep.
-        </p>
-      </section>
-
-      <p className="byline">
-        Built by Andre Johnson, Ace Hardware store manager. The suggestion habit is the cheapest
-        revenue and loyalty lever on my floor, and the least practiced.
-      </p>
     </main>
   );
 }
