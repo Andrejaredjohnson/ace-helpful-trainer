@@ -64,7 +64,9 @@ function saveProgress(p: Progress) {
 
 // ---------- api ----------
 
-async function api(body: object): Promise<{ text?: string; evaluation?: Evaluation; error?: string }> {
+async function api(
+  body: object,
+): Promise<{ text?: string; offerMade?: boolean; evaluation?: Evaluation; error?: string }> {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -260,23 +262,20 @@ function Trainer(props: {
   );
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState<'reply' | 'evaluate' | null>(null);
+  const [ended, setEnded] = useState(false);
   const [error, setError] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
 
-  const answered = messages.some((m) => m.role === 'employee');
   const evaluation = props.savedEvaluation;
+  const employeeTurns = messages.filter((m) => m.role === 'employee').length;
+  const MAX_EMPLOYEE_TURNS = 4;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, busy, evaluation]);
 
-  // Resume mid-scenario: answered but no feedback yet (page was dropped). Fetch the evaluation.
-  useEffect(() => {
-    if (answered && !evaluation && !busy) void evaluate(messages);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function evaluate(msgs: ChatMessage[]) {
+    setEnded(true);
     setBusy('evaluate');
     setError('');
     try {
@@ -291,7 +290,7 @@ function Trainer(props: {
 
   const send = async () => {
     const text = draft.trim();
-    if (!text || busy || answered) return;
+    if (!text || busy || ended || evaluation) return;
     const withMine: ChatMessage[] = [...messages, { role: 'employee', text }];
     setMessages(withMine);
     props.onTranscript(withMine);
@@ -299,17 +298,24 @@ function Trainer(props: {
     setError('');
     setBusy('reply');
     let finalMsgs = withMine;
+    let offered = false;
     try {
-      const { text: bounce } = await api({ scenarioId: scenario.id, messages: withMine, mode: 'reply' });
+      const { text: bounce, offerMade } = await api({ scenarioId: scenario.id, messages: withMine, mode: 'reply' });
+      offered = offerMade === true;
       if (bounce) {
         finalMsgs = [...withMine, { role: 'customer', text: bounce }];
         setMessages(finalMsgs);
         props.onTranscript(finalMsgs);
       }
     } catch {
-      // The bounce is color, not substance. If it fails, go straight to feedback.
+      // The bounce is color, not substance. If it fails, count the turn and move on.
     }
-    await evaluate(finalMsgs);
+    const turns = withMine.filter((m) => m.role === 'employee').length;
+    if (offered || turns >= MAX_EMPLOYEE_TURNS) {
+      await evaluate(finalMsgs);
+    } else {
+      setBusy(null);
+    }
   };
 
   return (
@@ -320,7 +326,7 @@ function Trainer(props: {
           <strong>{scenario.name}</strong>
           <span className="persona-bio">Came in for {scenario.item}</span>
         </div>
-        {!answered && (
+        {!ended && !evaluation && (
           <button className="linkish skip" onClick={props.onSkip}>
             Skip
           </button>
@@ -354,7 +360,7 @@ function Trainer(props: {
         <div ref={endRef} />
       </div>
 
-      {!answered ? (
+      {!ended && !evaluation ? (
         <div className="composer">
           <div className="input-row">
             <textarea
@@ -366,7 +372,7 @@ function Trainer(props: {
                   send();
                 }
               }}
-              placeholder="How do you respond?"
+              placeholder={employeeTurns === 0 ? 'How do you respond?' : 'Keep helping…'}
               rows={2}
               disabled={busy !== null}
             />
@@ -500,9 +506,10 @@ function Design() {
         <h3>One rep, drilled</h3>
         <p>
           This trains exactly one behavior: a customer asks for a product, you answer, and you
-          suggest one item that goes with it. No branching plots, no puzzles. The scenario is the
-          product. Keeping the rep small is what makes it repeatable, and repeatable is what makes
-          it a habit.
+          offer one item that goes with it. Ask about their project first if that helps you land
+          on something useful; the conversation runs until you&rsquo;ve made an offer. No branching
+          plots, no puzzles. The scenario is the product. Keeping the rep small is what makes it
+          repeatable, and repeatable is what makes it a habit.
         </p>
       </section>
 

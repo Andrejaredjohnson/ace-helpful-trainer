@@ -9,7 +9,7 @@ interface ChatMessage {
 }
 
 const MAX_MESSAGE_CHARS = 1200;
-const MAX_MESSAGES = 8;
+const MAX_MESSAGES = 12;
 
 // --- usage caps (in-memory; resets on cold start, which is fine for this demo's threat model) ---
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -70,14 +70,22 @@ export function transcriptText(messages: ChatMessage[], customerName: string): s
 
 export function personaSystemPrompt(scenarioId: string): string {
   const s = getScenario(scenarioId)!;
-  return `You are ${s.name}, a customer in a hardware store. You came in for one thing: ${s.item}. A store employee is practicing customer service with you. You already asked where to find ${s.item} (your opening line is in the transcript).
+  return `You are ${s.name}, a customer in a hardware store. You came in for one thing: ${s.item}. A store employee is practicing customer service with you. Your opening line is in the transcript.
 
-Reply with your ONE follow-up line reacting to what the employee said, then you are leaving the store. Rules:
+ABOUT YOUR PROJECT (use this to answer questions; share it plainly when asked, never as a riddle): ${s.facts}
+
+You respond with a JSON object, nothing else:
+{"line": "<your next spoken line>", "offer_made": true|false}
+
+offer_made is true if the employee has AT ANY POINT in the conversation offered, suggested, or asked about an additional product beyond ${s.item} itself. Pointing you toward related supplies counts. Asking questions about your project does NOT count by itself.
+
+Rules for "line":
 - 1-2 short sentences, matching the voice of your opening line: if it was plain, stay plain and ordinary; if it was playful, stay playful.
-- If they told you where the item is, take it in stride. If they suggested another item, react like a real person: accept it, wave it off, or crack a small joke about it. Then wrap up (thanks, and you are off).
+- If offer_made is false: react naturally and stay in the conversation. Answer their questions from your project facts. Do not hint that you want more suggestions and do not suggest products to yourself.
+- If offer_made is true: react to the offer like a real person (take it, wave it off, or make a small remark), then wrap up naturally, you are heading off.
 - Never use em dashes or en dashes. Use commas, periods, or ellipses.
-- No stage directions, no quotation marks, no name prefix. Just the spoken line.
-- Never coach the employee, never mention being an AI, never suggest products to yourself.
+- No stage directions, no name prefix.
+- Never coach the employee and never mention being an AI.
 - If the employee was rude, inappropriate, or nonsensical, react the way a real customer would: put off, confused, or asking for a manager. Stay in character. Do not produce inappropriate content yourself.`;
 }
 
@@ -94,6 +102,7 @@ Judge the employee's response on exactly two things:
 BE GENEROUS. This is not a sales pitch exercise. The employee just has to offer something related; if the customer says no, that is completely fine. Any item a normal person would connect to ${s.item} counts fully: a specific item, a couple of items, or even a general point toward related supplies ("we've got brushes and everything else you'll need right over here") all count as a full, successful offer. Do NOT judge framing, specificity, phrasing, salesmanship, or how the customer reacted. Do NOT manufacture criticism. The ONLY failure is offering something with no sensible connection to ${s.item} (like carburetor cleaner to someone buying paint), or offering nothing at all.
 
 RULES:
+- The conversation may run several turns. Asking the customer questions about their project before offering is a perfectly good approach; judge the offer whenever it came, and never penalize taking a turn or two to get there.
 - There is no answer key. If the connection is plausible, it counts.
 - Never say what they "should have" offered. The other_ideas list is just friendly extra ammo for next time, options, not corrections.
 - If the response was good, say so plainly and stop. A one-line "keep doing exactly this" is a complete coach's note. When torn between two ratings, ALWAYS pick the higher one.
@@ -163,11 +172,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const transcript = transcriptText(messages, scenario.name);
 
     if (mode === 'reply') {
-      const text = await runClaude(
+      const raw = await runClaude(
         personaSystemPrompt(scenario.id),
-        `Here is the conversation:\n\n${transcript}\n\nGive your one follow-up line.`,
+        `Here is the conversation so far:\n\n${transcript}\n\nRespond with your JSON object.`,
       );
-      res.status(200).json({ text });
+      let text = raw;
+      let offerMade = false;
+      try {
+        const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+        const start = cleaned.indexOf('{');
+        const end = cleaned.lastIndexOf('}');
+        const j = JSON.parse(cleaned.slice(start, end + 1)) as { line?: string; offer_made?: boolean };
+        if (typeof j.line === 'string' && j.line.trim()) text = j.line.trim();
+        offerMade = j.offer_made === true;
+      } catch {
+        // Fall back to treating the raw output as the spoken line; the turn cap ends the scene.
+      }
+      res.status(200).json({ text, offerMade });
       return;
     }
 
