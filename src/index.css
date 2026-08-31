@@ -467,6 +467,7 @@ body {
 .callout {
   position: sticky;
   bottom: 12px;
+  z-index: 10;
   background: var(--card);
   border: 2px solid var(--red);
   border-radius: 12px;
