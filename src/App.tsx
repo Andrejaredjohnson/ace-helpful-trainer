@@ -382,8 +382,12 @@ function Feedback({
   onNext: () => void;
 }) {
   const meta = RATING_META[ev.rating] ?? RATING_META.solid;
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
   return (
-    <div className="feedback">
+    <div className="feedback" ref={cardRef}>
       <span className="rating-pill" style={{ color: meta.color, background: meta.bg }}>
         {meta.label}
       </span>
