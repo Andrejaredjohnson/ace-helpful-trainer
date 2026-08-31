@@ -11,6 +11,25 @@ interface ChatMessage {
 const MAX_MESSAGE_CHARS = 1200;
 const MAX_MESSAGES = 24;
 
+// --- usage caps (in-memory; resets on cold start, which is fine for this demo's threat model) ---
+const WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const PER_VISITOR_LIMIT = 45; // AI calls per visitor per hour
+const GLOBAL_LIMIT = 250; // AI calls per hour across all visitors
+const visitorHits = new Map<string, number[]>();
+let globalHits: number[] = [];
+
+function overLimit(ip: string): boolean {
+  const now = Date.now();
+  globalHits = globalHits.filter((t) => now - t < WINDOW_MS);
+  const mine = (visitorHits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  if (globalHits.length >= GLOBAL_LIMIT || mine.length >= PER_VISITOR_LIMIT) return true;
+  mine.push(now);
+  globalHits.push(now);
+  visitorHits.set(ip, mine);
+  if (visitorHits.size > 500) visitorHits.clear(); // don't grow unbounded
+  return false;
+}
+
 /** Run a single, tool-less Claude turn via the Agent SDK (subscription auth). */
 export async function runClaude(systemPrompt: string, userPrompt: string): Promise<string> {
   let out = '';
@@ -102,6 +121,17 @@ OUTPUT: respond with ONLY a valid JSON object, no markdown fences, exactly this 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const ip =
+    (typeof req.headers['x-forwarded-for'] === 'string'
+      ? req.headers['x-forwarded-for'].split(',')[0].trim()
+      : '') || 'unknown';
+  if (overLimit(ip)) {
+    res.status(429).json({
+      error: "You've been putting in serious reps — the trainer needs an hour to catch its breath. Come back then.",
+    });
     return;
   }
 

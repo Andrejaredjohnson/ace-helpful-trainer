@@ -32,3 +32,5 @@ header value from CLAUDE_CODE_OAUTH_TOKEN: it contains a line break at character
 }
 
 waiting for new logs...
+WARNING! Command automatically interrupted after 5 minutes.
+
