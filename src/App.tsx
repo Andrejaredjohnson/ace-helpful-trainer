@@ -232,20 +232,24 @@ export default function App() {
 function Landing({ hasProgress, onStart }: { hasProgress: boolean; onStart: (fresh: boolean) => void }) {
   return (
     <main className="card landing">
-      <p className="kicker">2-minute practice &middot; 3 customers</p>
-      <h1>
-        Nobody comes in for a roller.
-        <br />
-        They come in to paint a room.
-      </h1>
+      <img className="hero" src="/hero.jpg" alt="An Ace associate helping a customer in the aisle" />
+      <h1>Always suggest additional items when helping customers.</h1>
       <p className="lede">
-        The customers about to walk in each want one thing. Tell them where to find it, then
-        suggest one item that goes with it, the thing they&rsquo;ll be glad they didn&rsquo;t
-        forget. You&rsquo;ll get quick, honest feedback on whether your suggestion fit or felt
-        forced. That&rsquo;s the whole game.
+        Customer asks for a PVC fitting? Suggest glue. Buying paint? Suggest brushes and rollers.
       </p>
+      <section className="why">
+        <h3>It improves the customer experience</h3>
+        <p>
+          One extra suggestion saves them a second trip to the store, and it shows you care about
+          their whole project, not just the item on their list.
+        </p>
+      </section>
+      <section className="why">
+        <h3>It improves store performance</h3>
+        <p>Every extra dollar added to the average sale is worth about $50,000 at year end.</p>
+      </section>
       <button className="btn-primary" onClick={() => onStart(!hasProgress)}>
-        {hasProgress ? 'Pick up where you left off' : 'Meet your first customer'}
+        {hasProgress ? 'Pick up where you left off' : "Let's practice"}
       </button>
       {hasProgress && (
         <button className="linkish sub" onClick={() => onStart(true)}>

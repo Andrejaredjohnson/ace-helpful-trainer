@@ -135,6 +135,33 @@ body {
   color: var(--red);
 }
 
+.hero {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  display: block;
+}
+
+.landing .why {
+  margin-bottom: 16px;
+}
+
+.landing .why h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+.landing .why p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+.landing .btn-primary {
+  margin-top: 6px;
+}
+
 .landing h1,
 .design h1 {
   margin: 0 0 14px;
