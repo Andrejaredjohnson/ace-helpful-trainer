@@ -175,7 +175,7 @@ export default function App() {
     <div className={chatMode ? 'shell chat-mode' : 'shell'}>
       <header className="topbar">
         <button className="brand" onClick={() => update({ phase: 'landing' })} aria-label="Home">
-          <span className="brand-mark">H</span>
+          <img className="brand-logo" src="/ace-logo.png" alt="Ace" />
           <span className="brand-name">Helpful&nbsp;Trainer</span>
         </button>
         {progress.phase === 'chat' && (

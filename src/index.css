@@ -73,16 +73,10 @@ body {
   font: inherit;
 }
 
-.brand-mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: var(--red);
-  color: #fff;
-  font-weight: 800;
-  font-size: 17px;
-  display: grid;
-  place-items: center;
+.brand-logo {
+  height: 26px;
+  width: auto;
+  display: block;
 }
 
 .brand-name {
