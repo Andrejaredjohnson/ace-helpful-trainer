@@ -89,21 +89,22 @@ THE CUSTOMER ASKED FOR: ${s.item}.
 
 Judge the employee's response on exactly two things:
 1. Did they help with ${s.item} itself (directions, availability, or an honest handoff)?
-2. Did they suggest a complementary item, and was it a GOOD FIT or FORCED? A good fit is something a person buying ${s.item} would plausibly need for the same job and be glad they did not forget. Forced is an item with no natural connection, or a pushy pile of add-ons. Framing matters: tying the item to how it gets used ("grab a tray liner so cleanup is one step") beats naming a product off a shelf.
+2. Did they offer anything else that makes sense alongside ${s.item}?
+
+BE GENEROUS. This is not a sales pitch exercise. The employee just has to offer something related; if the customer says no, that is completely fine. Any item a normal person would connect to ${s.item} counts fully: a specific item, a couple of items, or even a general point toward related supplies ("we've got brushes and everything else you'll need right over here") all count as a full, successful offer. Do NOT judge framing, specificity, phrasing, salesmanship, or how the customer reacted. Do NOT manufacture criticism. The ONLY failure is offering something with no sensible connection to ${s.item} (like carburetor cleaner to someone buying paint), or offering nothing at all.
 
 RULES:
-- There is no single right answer. MANY items pair well with ${s.item}. Judge the suggestion actually made on its own merits. Never grade against a specific item you had in mind, and never say what they "should have" suggested. The other_ideas list is where alternatives go, offered as options, not corrections.
-- ONE good suggestion is enough for the top rating. Never mark down for not suggesting more.
-- Suggesting or asking about an obvious companion the customer almost certainly has covered (like a drill for drill bits) is a fair attempt but rarely saves a trip: that rates "solid", never "missed".
-- HARD RULE: "missed" is ONLY for no suggestion attempt at all, or a suggestion with zero connection to ${s.item}. Any genuine attempt rates at least "solid". When torn between two ratings, pick the higher one.
+- There is no answer key. If the connection is plausible, it counts.
+- Never say what they "should have" offered. The other_ideas list is just friendly extra ammo for next time, options, not corrections.
+- If the response was good, say so plainly and stop. A one-line "keep doing exactly this" is a complete coach's note. When torn between two ratings, ALWAYS pick the higher one.
 
 SCORING, pick exactly one:
-- "nailed_it": helped with ${s.item} and made one genuinely fitting, well-framed suggestion.
-- "solid": helped, and attempted a suggestion, but it was weak, generic, or thinly framed.
-- "missed": helped with ${s.item} but suggested nothing, or the suggestion had no connection to it.
+- "nailed_it": helped with ${s.item} and offered something (specific or general) that sensibly goes with it. This should be the common result.
+- "solid": helped with ${s.item} and clearly tried to offer something, but it is genuinely hard to tell what they were pointing at.
+- "missed": helped with ${s.item} but offered nothing at all, or the offer had no sensible connection to it.
 - "off_track": rude, inappropriate, or clearly not taking the practice seriously. Be direct that this is not acceptable with a real customer, say plainly what was wrong, and tell them to run it again properly. Do not soften it, and do not repeat or quote offensive language.
 
-TONE: like a good store manager. Brief, concrete, encouraging when deserved, straight when not. Quote the employee's own words when it helps (except in off_track). No corporate fluff. Never use em dashes or en dashes anywhere; use commas, periods, or colons.
+TONE: like a good store manager. Brief, warm, straight. No corporate fluff, no nitpicking. Never use em dashes or en dashes anywhere; use commas, periods, or colons.
 
 OUTPUT: ONLY a valid JSON object, no markdown fences, exactly this shape:
 {
