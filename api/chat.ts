@@ -25,6 +25,10 @@ export async function runClaude(systemPrompt: string, userPrompt: string): Promi
       persistSession: false,
       env: {
         ...process.env,
+        // Tokens pasted from a terminal sometimes arrive wrapped across lines — strip all whitespace.
+        ...(process.env.CLAUDE_CODE_OAUTH_TOKEN
+          ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN.replace(/\s+/g, '') }
+          : {}),
         // Vercel's serverless filesystem is read-only outside /tmp; the CLI needs a writable HOME.
         ...(process.env.VERCEL ? { HOME: '/tmp' } : {}),
       },

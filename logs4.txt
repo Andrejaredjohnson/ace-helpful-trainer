@@ -1,0 +1,34 @@
+﻿node.exe : <claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+At C:\Users\andre\AppData\Roaming\npm\vercel.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/vercel/dist/vc.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (<claude-code-hi...ns-official" />:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Retrieving project…
+Resolving deployment "ace-helpful-trainer-jbejo9qrq-andre-4504s-projects.vercel.app"
+Streaming logs for deployment dpl_CMK6JZCWUFraU9BD3pPmyHaZ1gjN starting from 18:16:35.31
+
+waiting for new logs...
+18:16:29.23  🚫  POST  ---  ace-helpful-trainer.vercel.app     /api/chat
+------------------------------------------------------------------------
+Error: Claude Code returned an error result: Invalid auth token · Fix external auth token · Invalid Authorization 
+header value from CLAUDE_CODE_OAUTH_TOKEN: it contains a line break at character 80 (110 characters on 2 lines).
+    at hy.readMessages (file:///var/task/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs:99:26056)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  telemetryMessage: 'Claude Code returned an error result',
+  errorClass: 'error_result'
+}
+
+waiting for new logs...
+18:16:47.38  🚫  POST  ---  ace-helpful-trainer.vercel.app     /api/chat
+------------------------------------------------------------------------
+Error: Claude Code returned an error result: Invalid auth token · Fix external auth token · Invalid Authorization 
+header value from CLAUDE_CODE_OAUTH_TOKEN: it contains a line break at character 80 (110 characters on 2 lines).
+    at hy.readMessages (file:///var/task/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs:99:26056)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  telemetryMessage: 'Claude Code returned an error result',
+  errorClass: 'error_result'
+}
+
+waiting for new logs...

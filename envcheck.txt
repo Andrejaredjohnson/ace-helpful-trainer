@@ -1,0 +1,17 @@
+﻿node.exe : <claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+At C:\Users\andre\AppData\Roaming\npm\vercel.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/vercel/dist/vc.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (<claude-code-hi...ns-official" />:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Retrieving project…
+> Environment Variables found for andre-4504s-projects/ace-helpful-trainer [176ms]
+
+ name                       value               environments        created    
+ CLAUDE_CODE_OAUTH_TOKEN    Encrypted           Production          34s ago    
+
+Common next commands:
+- `vercel env add`
+- `vercel env rm`
+- `vercel env pull`
