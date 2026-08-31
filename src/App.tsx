@@ -24,7 +24,6 @@ interface Progress {
   transcripts: Record<string, ChatMessage[]>;
   evaluations: Record<string, Evaluation>;
   skipped: string[];
-  submittedName?: string;
 }
 
 const STORAGE_KEY = 'ace-helpful-trainer-v2';
@@ -202,7 +201,6 @@ export default function App() {
       {progress.phase === 'done' && (
         <Done
           progress={progress}
-          onSubmitted={(name) => update({ submittedName: name })}
           onRestart={() => {
             const cleared = freshProgress('chat');
             saveProgress(cleared);
@@ -664,45 +662,13 @@ function Feedback({
 
 function Done({
   progress,
-  onSubmitted,
   onRestart,
   onDesign,
 }: {
   progress: Progress;
-  onSubmitted: (name: string) => void;
   onRestart: () => void;
   onDesign: () => void;
 }) {
-  const [name, setName] = useState('');
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState('');
-
-  const submit = async () => {
-    const clean = name.trim();
-    if (!clean || sending) return;
-    setSending(true);
-    setError('');
-    try {
-      const res = await fetch('/api/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: clean,
-          results: SCENARIOS.map((s) => ({
-            customer: s.name,
-            rating: progress.evaluations[s.id]?.rating ?? (progress.skipped.includes(s.id) ? 'skipped' : 'none'),
-          })),
-        }),
-      });
-      if (!res.ok) throw new Error();
-      onSubmitted(clean);
-    } catch {
-      setError('That did not go through. Try again.');
-    } finally {
-      setSending(false);
-    }
-  };
-
   return (
     <main className="card landing">
       <p className="kicker">That&rsquo;s the whole thing</p>
@@ -728,39 +694,7 @@ function Done({
         })}
       </ul>
 
-      {progress.submittedName ? (
-        <div className="submit-box submitted">
-          <h3>Submitted</h3>
-          <p>
-            Nice work, {progress.submittedName}. Your completion is recorded so your manager knows
-            this training is done.
-          </p>
-        </div>
-      ) : (
-        <div className="submit-box">
-          <h3>Submit your completion</h3>
-          <p>Enter your name so your manager knows you finished the training.</p>
-          <div className="submit-row">
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') submit();
-              }}
-              placeholder="Your name"
-              maxLength={80}
-              autoComplete="name"
-            />
-            <button className="btn-primary submit-btn" onClick={submit} disabled={sending || !name.trim()}>
-              {sending ? 'Submitting…' : 'Submit'}
-            </button>
-          </div>
-          {error && <p className="error">{error}</p>}
-        </div>
-      )}
-
-      <button className="linkish sub" onClick={onDesign}>
+      <button className="btn-primary" onClick={onDesign}>
         Why it&rsquo;s built this way
       </button>
       <button className="linkish sub" onClick={onRestart}>
