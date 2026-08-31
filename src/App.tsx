@@ -271,7 +271,7 @@ const TUTORIAL_STEPS: TutStep[] = [
   { kind: 'customer', text: 'Oh wonderful, thank you dear.' },
   {
     kind: 'callout',
-    text: "The best suggestion isn't always obvious. Ask a follow-up question about the project to figure out what she might need.",
+    text: 'You may need to ask a follow-up question about the project to figure out the best item to suggest.',
     next: 'Next',
   },
   { kind: 'type', text: 'So are you repainting the whole kitchen?' },
@@ -291,7 +291,7 @@ const TUTORIAL_STEPS: TutStep[] = [
   { kind: 'customer', text: 'Perfect. Drop cloth and tape it is, my counters thank you!' },
   {
     kind: 'callout',
-    text: "Rita went for it this time. Sometimes they will, sometimes they won't, and either way it's a win, because either way we were helpful.",
+    text: "Sometimes the customer will want the extra item, sometimes they won't. Either way it's a win, because either way we were helpful.",
     next: 'Next',
   },
   { kind: 'feedback' },
