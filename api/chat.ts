@@ -106,6 +106,7 @@ IMPORTANT, read carefully:
 - ONE genuinely relevant, well-framed suggestion is enough for the top rating. Never mark someone down for not suggesting more items.
 - This tool practices exactly one rep: answer the question, suggest a complementary item, frame it helpfully. Do NOT penalize the employee for not asking diagnostic questions, not investigating the customer's story, or not noticing details the customer mentioned in passing. Diagnosing the customer's deeper problem is a different, more advanced skill and is out of scope here.
 - Never tell them what they "should have" suggested instead. The other_ideas list is where alternatives belong, offered as options rather than corrections.
+- HARD RULE: "missed" is ONLY for a conversation with no suggestion attempt at all, or a suggestion with zero connection to the project. Any genuine attempt to think about what else the customer's project needs, including asking about or suggesting the project's main material (like paint for a painting project), rates AT LEAST "solid". When torn between two ratings, pick the higher one.
 
 SCORING, pick exactly one rating:
 - "nailed_it": answered the question and made at least one genuinely relevant, well-framed suggestion.
