@@ -16,16 +16,18 @@ export interface Scenario {
   facts: string;
 }
 
+/** Tutorial-only customer. Fully scripted in the UI; never used for live practice. */
+export const TUTORIAL_CUSTOMER: Scenario = {
+  id: 'rita',
+  name: 'Rita',
+  initials: 'R',
+  avatarColor: '#7B4B94',
+  item: 'paint',
+  opener: "I finally lost the argument about the kitchen color. Where's your paint?",
+  facts: 'Scripted tutorial; not used.',
+};
+
 export const SCENARIOS: Scenario[] = [
-  {
-    id: 'rita',
-    name: 'Rita',
-    initials: 'R',
-    avatarColor: '#7B4B94',
-    item: 'paint',
-    opener: "I finally lost the argument about the kitchen color. Where's your paint?",
-    facts: "You're repainting your kitchen walls. You're starting from scratch on supplies; you own nothing but opinions about the color.",
-  },
   {
     id: 'gus',
     name: 'Gus',
@@ -43,6 +45,15 @@ export const SCENARIOS: Scenario[] = [
     item: 'drill bits',
     opener: "I'm looking for drill bits.",
     facts: "You're hanging shelves on a brick wall, and the bits you have at home barely scratched it. You haven't bought anchors or screws yet.",
+  },
+  {
+    id: 'dana',
+    name: 'Dana',
+    initials: 'D',
+    avatarColor: '#4A6FA5',
+    item: 'grass seed',
+    opener: 'My backyard has more dirt patches than grass at this point. Do you guys sell grass seed?',
+    facts: "You're reseeding bare patches all over your backyard. You have a hose and nothing else: no spreader, no fertilizer, no topsoil.",
   },
 ];
 

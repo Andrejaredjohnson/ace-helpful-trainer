@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { SCENARIOS, type Scenario } from '../shared/scenarios';
+import { SCENARIOS, TUTORIAL_CUSTOMER, type Scenario } from '../shared/scenarios';
 
 // ---------- types ----------
 
@@ -16,7 +16,7 @@ interface Evaluation {
   other_ideas: string[];
 }
 
-type Phase = 'landing' | 'chat' | 'done' | 'design';
+type Phase = 'landing' | 'tutorial' | 'chat' | 'done' | 'design';
 
 interface Progress {
   phase: Phase;
@@ -157,6 +157,7 @@ export default function App() {
             Customer {progress.scenarioIndex + 1} of {SCENARIOS.length}
           </span>
         )}
+        {progress.phase === 'tutorial' && <span className="topbar-step">How it works</span>}
         <button className="linkish" onClick={progress.phase === 'design' ? closeDesign : openDesign}>
           {progress.phase === 'design' ? 'Back' : 'Why it works'}
         </button>
@@ -165,12 +166,14 @@ export default function App() {
       {progress.phase === 'landing' && (
         <Landing
           onStart={() => {
-            const cleared = freshProgress('chat');
+            const cleared = freshProgress('tutorial');
             saveProgress(cleared);
             setProgress(cleared);
           }}
         />
       )}
+
+      {progress.phase === 'tutorial' && <Tutorial onDone={() => update({ phase: 'chat' })} />}
 
       {progress.phase === 'chat' && (
         <Trainer
@@ -244,6 +247,203 @@ function Landing({ onStart }: { onStart: () => void }) {
       <button className="btn-primary" onClick={onStart}>
         Let&rsquo;s Practice
       </button>
+    </main>
+  );
+}
+
+// ---------- tutorial ----------
+
+type TutStep =
+  | { kind: 'callout'; text: string; next: string }
+  | { kind: 'type'; text: string }
+  | { kind: 'customer'; text: string }
+  | { kind: 'feedback' };
+
+const TUTORIAL_STEPS: TutStep[] = [
+  {
+    kind: 'callout',
+    text: "This is Rita. She wants paint. It's your job to help her find it: type what you'd say to her right here.",
+    next: 'Next',
+  },
+  { kind: 'type', text: "Come on over to the paint counter and we'll get it mixed for you." },
+  { kind: 'customer', text: 'Oh wonderful, thank you dear.' },
+  {
+    kind: 'callout',
+    text: "The best suggestion isn't always obvious. Ask a follow-up question about the project to figure out what she might need.",
+    next: 'Next',
+  },
+  { kind: 'type', text: 'So are you repainting the whole kitchen?' },
+  {
+    kind: 'customer',
+    text: "The whole thing, floor to ceiling. Honestly I'm just worried about getting paint all over my counters.",
+  },
+  {
+    kind: 'callout',
+    text: "There it is. She's worried about the mess, so suggest something that solves it.",
+    next: 'Next',
+  },
+  {
+    kind: 'type',
+    text: "Then let's grab you a drop cloth and some painter's tape. Your counters will never know it happened.",
+  },
+  { kind: 'customer', text: 'Perfect. Drop cloth and tape it is, my counters thank you!' },
+  { kind: 'feedback' },
+];
+
+const TUTORIAL_FEEDBACK: Evaluation = {
+  rating: 'nailed_it',
+  headline: 'Found the paint, asked one good question, and saved her counters.',
+  what_worked:
+    'You helped with the paint first, and your follow-up question surfaced what Rita was actually worried about, so the drop cloth and tape landed as help, not a pitch.',
+  coaching: 'That is the whole rep. Answer, ask if you need to, offer one thing that fits.',
+  other_ideas: [
+    'A roller and tray set, since a whole kitchen is a lot of wall',
+    'Stir sticks and a can opener, small stuff people forget',
+  ],
+};
+
+function Tutorial({ onDone }: { onDone: () => void }) {
+  const scenario = TUTORIAL_CUSTOMER;
+  const [step, setStep] = useState(0);
+  const [messages, setMessages] = useState<ChatMessage[]>([{ role: 'customer', text: scenario.opener }]);
+  const [draft, setDraft] = useState('');
+  const [customerTyping, setCustomerTyping] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  const current = TUTORIAL_STEPS[step];
+  const showFeedback = current?.kind === 'feedback';
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, draft, step, customerTyping]);
+
+  useEffect(() => {
+    if (!current) return;
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    if (current.kind === 'type') {
+      const text = current.text;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let i = 0;
+      const tick = () => {
+        if (cancelled) return;
+        i = reduced ? text.length : i + 1;
+        setDraft(text.slice(0, i));
+        if (i < text.length) {
+          timers.push(setTimeout(tick, 28));
+        } else {
+          timers.push(
+            setTimeout(() => {
+              if (cancelled) return;
+              setDraft('');
+              setMessages((m) => [...m, { role: 'employee', text }]);
+              setStep((s) => s + 1);
+            }, 500),
+          );
+        }
+      };
+      timers.push(setTimeout(tick, 500));
+    }
+
+    if (current.kind === 'customer') {
+      setCustomerTyping(true);
+      timers.push(
+        setTimeout(() => {
+          if (cancelled) return;
+          setCustomerTyping(false);
+          setMessages((m) => [...m, { role: 'customer', text: current.text }]);
+          setStep((s) => s + 1);
+        }, 900),
+      );
+    }
+
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  return (
+    <main className="trainer">
+      <div className="persona-strip">
+        <Avatar s={scenario} />
+        <div>
+          <strong>{scenario.name}</strong>
+          <span className="persona-bio">Came in for {scenario.item}</span>
+        </div>
+      </div>
+
+      <div className="chat" role="log" aria-live="polite">
+        {messages.map((m, i) => (
+          <div key={i} className={`bubble-row ${m.role}`}>
+            {m.role === 'customer' && <Avatar s={scenario} size={28} />}
+            <div className={`bubble ${m.role}`}>{m.text}</div>
+          </div>
+        ))}
+        {customerTyping && (
+          <div className="bubble-row customer">
+            <Avatar s={scenario} size={28} />
+            <div className="bubble customer">
+              <Dots />
+            </div>
+          </div>
+        )}
+        {showFeedback && (
+          <div className="feedback tut-feedback">
+            <span
+              className="rating-pill"
+              style={{ color: RATING_META.nailed_it.color, background: RATING_META.nailed_it.bg }}
+            >
+              {RATING_META.nailed_it.label}
+            </span>
+            <h2>{TUTORIAL_FEEDBACK.headline}</h2>
+            <p>
+              <strong>What worked:</strong> {TUTORIAL_FEEDBACK.what_worked}
+            </p>
+            <p>
+              <strong>Coach&rsquo;s note:</strong> {TUTORIAL_FEEDBACK.coaching}
+            </p>
+            <div className="ideas">
+              <strong>Also would&rsquo;ve landed:</strong>
+              <ul>
+                {TUTORIAL_FEEDBACK.other_ideas.map((idea, i) => (
+                  <li key={i}>{idea}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      {current?.kind === 'callout' && (
+        <div className="callout">
+          <p>{current.text}</p>
+          <button className="btn-primary callout-next" onClick={() => setStep((s) => s + 1)}>
+            {current.next}
+          </button>
+        </div>
+      )}
+
+      {showFeedback ? (
+        <div className="callout">
+          <p>After every customer, your coach tells you how the suggestion landed. Ready?</p>
+          <button className="btn-primary callout-next" onClick={onDone}>
+            Your turn
+          </button>
+        </div>
+      ) : (
+        <div className="composer">
+          <div className="input-row">
+            <textarea value={draft} readOnly placeholder="How do you respond?" rows={2} aria-label="Demo chat input" />
+            <button className="btn-send" disabled aria-label="Send">
+              &#10148;
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
