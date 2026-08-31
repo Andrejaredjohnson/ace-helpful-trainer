@@ -23,7 +23,7 @@ export const TUTORIAL_CUSTOMER: Scenario = {
   initials: 'R',
   avatarColor: '#7B4B94',
   item: 'paint',
-  opener: "I finally lost the argument about the kitchen color. Where's your paint?",
+  opener: "Hi there! I'm finally repainting my kitchen this weekend. Where do you keep your paint?",
   facts: 'Scripted tutorial; not used.',
 };
 
