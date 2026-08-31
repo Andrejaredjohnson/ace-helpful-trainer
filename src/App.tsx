@@ -145,11 +145,6 @@ export default function App() {
   };
   const closeDesign = () => setProgress((p) => ({ ...p, phase: returnPhase }));
 
-  const started =
-    Object.keys(progress.evaluations).length > 0 ||
-    progress.skipped.length > 0 ||
-    Object.keys(progress.transcripts).length > 0;
-
   return (
     <div className="shell">
       <header className="topbar">
@@ -169,15 +164,10 @@ export default function App() {
 
       {progress.phase === 'landing' && (
         <Landing
-          hasProgress={started}
-          onStart={(fresh) => {
-            if (fresh) {
-              const cleared = freshProgress('chat');
-              saveProgress(cleared);
-              setProgress(cleared);
-            } else {
-              update({ phase: 'chat' });
-            }
+          onStart={() => {
+            const cleared = freshProgress('chat');
+            saveProgress(cleared);
+            setProgress(cleared);
           }}
         />
       )}
@@ -229,7 +219,7 @@ export default function App() {
 
 // ---------- landing ----------
 
-function Landing({ hasProgress, onStart }: { hasProgress: boolean; onStart: (fresh: boolean) => void }) {
+function Landing({ onStart }: { onStart: () => void }) {
   return (
     <main className="card landing">
       <img className="hero" src="/hero.jpg" alt="An Ace associate helping a customer in the aisle" />
@@ -248,14 +238,9 @@ function Landing({ hasProgress, onStart }: { hasProgress: boolean; onStart: (fre
         <h3>It improves store performance</h3>
         <p>Every extra dollar added to the average sale is worth about $50,000 at year end.</p>
       </section>
-      <button className="btn-primary" onClick={() => onStart(!hasProgress)}>
-        {hasProgress ? 'Pick up where you left off' : "Let's practice"}
+      <button className="btn-primary" onClick={onStart}>
+        Let&rsquo;s Practice
       </button>
-      {hasProgress && (
-        <button className="linkish sub" onClick={() => onStart(true)}>
-          Start over instead
-        </button>
-      )}
     </main>
   );
 }
