@@ -721,7 +721,7 @@ function Design() {
       </div>
 
       <section>
-        <h3>Training employees can do on the floor</h3>
+        <h3>Training employees can do while on the floor</h3>
         <p>
           We usually don&rsquo;t have enough employees working to pull someone off the floor for
           training. So I built a training employees can do while they&rsquo;re on the floor,
