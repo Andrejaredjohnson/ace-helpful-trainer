@@ -28,7 +28,7 @@ interface Progress {
 }
 
 /** Resume a dropped session only briefly; a stale open starts at the beginning. */
-const RESUME_WINDOW_MS = 30 * 60 * 1000;
+const RESUME_WINDOW_MS = 10 * 60 * 1000;
 
 const STORAGE_KEY = 'ace-helpful-trainer-v2';
 
